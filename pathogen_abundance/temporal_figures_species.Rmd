@@ -1,4 +1,10 @@
 #!/usr/bin/env Rscript
+---
+title: "pathogen_abundance"
+author: "Adrián Chalco"
+date: "2025-01-10"
+output: html_document
+---
 
 ## Preparar librerías
 ```{r}
@@ -6,6 +12,7 @@ library(tidyverse)
 library(readr)
 library(janitor)
 library(ggplot2)
+library(ggpubr)
 library(scales)
 library(boot)
 library(RColorBrewer)
@@ -68,36 +75,54 @@ mw_met$barcode <- sprintf("barcode%02d", mw_met$barcode)
 
 ##AÑADIENDO ULTIMO SECUENCIAMIENTO
 last_temp <- data.frame(
-  sample_id = c("AR083_1", "AR083_2", "AR083_3", "AR113_1", "AR113_2", "AR113_3", "AR074", "Mock Community", "Negative Control - Human DNA"),
+  sample = c("AR083_1", "AR083_2", "AR083_3", "AR113_1", "AR113_2", "AR113_3", "AR074", "Mock Community", "Negative Control - Human DNA"),
   barcode = paste0("barcode0",c(1, 2, 3, 4, 5, 6, 7, 8, 9)),
   place = c("HCH", "HCH", "HCH", "INSN", "INSN", "INSN", "HMA", NA, NA),
   date = c("24/04/2024", "24/04/2024", "24/04/2024", "08/07/2024", "08/07/2024", "08/07/2024", "12/03/2024", NA, NA))
 
 seq2111_met<- data.frame(
-  sample_id = c("AR073", "AR078", "AR081", "AR087", "AR088", "AR089", "AR090", "AR092", 
+  sample = c("AR073", "AR078", "AR081", "AR087", "AR088", "AR089", "AR090", "AR092", 
                 "Mock Community", "Negative Control - Human DNA"),
   barcode = paste0("barcode",c(73, 74, 75, 76, 77, 78, 79, 80, 81, 82)),
   place = c("HMA", "HMA", "HCH", "HMA", "HCH", "INSN", "HMA", "INSN", NA, NA),
   date = c("05/03/2024", "10/04/2024", "17/04/2024", "08/05/2024", "08/05/2024", "13/05/2024",
            "15/05/2024", "20/05/2024", NA, NA))
-
+seq1212_met <- data.frame(
+sample = c("AR097", "AR098", "AR099", "AR100", "AR101", "AR102", "AR103", "AR104", "AR105", "AR106", "Mock Community", "Negative control - Human DNA"),
+barcode = paste0("barcode",c(83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94)),
+place = c("HCH", "INSN", "HMA", "HCH", "INSN", "HMA", "HCH", "INSN", "HMA", "HCH", NA, NA),
+ date = c("29-05-2024", "03-06-2024", "05-06-2024", "05-06-2024", "10-06-2024", "12-06-2024", "12-06-2024", "17-06-2024", "19-06-2024", "19-06-2024", NA, NA)
+)
 # Unir los `data.frames` de metadata (`el_met`, `temp_met`, `mw_met`) en un único `data.frame`
 metadata <- bind_rows(
   "1405Gb" = el_met, 
   final_combined = temp_met, 
   MA_DS9_Crowfoot = mw_met, 
-  .id = "source"
+  .id = "source",
+  "seq2111"=seq2111_met,
+  "DS_3.8GB"=last_temp,
+  "seq1212"=seq1212_met
 ) %>%
   select(source, sample, barcode, place, date) %>% 
   rename(sample_id=sample) %>% 
   mutate(sample = str_c(barcode, source, sep = "_")) %>% 
   select(-c(source))
-last_temp<-last_temp %>% mutate(sample=str_c("17_set",barcode, sep="_"))
 
-metadata<-bind_rows(metadata,last_temp, seq2111_met%>%mutate(sample=paste0(barcode,".seq2111")))
-print(metadata)
+#En esta sección añadimos el número total de reads para cada barcode, para obtener la abundancia relativa 
+last_seq_total<-read_tsv(here("data","countreads_17sset.tsv.tsv"), col_names = c("sample","total"))%>% 
+mutate(sample=paste0("17_set_",sample))
+temporal_total<-read_tsv(here("data","countreads_ch.tsv.tsv"), col_names = c("sample","total"))
+mw_total<-read_tsv(here("data","countreads_mw.tsv.tsv"), col_names = c("sample","total")) 
+seq2111_total<-read_tsv(here("data","countreads_seq211.tsv"), col_names = c("sample","total"))%>%
+  mutate(sample=paste0(sample,"_seq2111"))
+seq1212_total<-read_tsv(here("data","countreads_seq1212.tsv"), col_names = c("sample","total")) %>% mutate(sample=paste0(sample,"_seq1212"))
+
+total_reads<-bind_rows(mw_total,temporal_total,last_seq_total, seq2111_total,seq1212_total)
+metadata_dos<-metadata %>% 
+  inner_join(total_reads,by="sample")
+
 ```
-## Procesar resultado de Sylph+ConQuR
+## Procesar resultado de Sylph+ConQuR: EN DESUSO
 ```{r}
 #conq<-read_tsv(here("data","ConQuR_corrected_matrix.tsv"))
 # Transponer `conq` usando pivot_longer para crear columnas de 'genome' y 'conteo'
@@ -119,29 +144,20 @@ final_df <- conq_long_sep %>%
 ## Procesar resultado de sylph
 Diferentes inputs
 ```{r}
-#En esta sección añadimos el número total de reads para cada barcode, para obtener la abundancia relativa 
-last_seq_total<-read_tsv(here("data","countreads_17sset.tsv.tsv"), col_names = c("sample","total"))%>% 
-mutate(sample=paste0("17_set_",sample))
-temporal_total<-read_tsv(here("data","countreads_ch.tsv.tsv"), col_names = c("sample","total"))
-mw_total<-read_tsv(here("data","countreads_mw.tsv.tsv"), col_names = c("sample","total")) 
-seq2111_total<-read_tsv(here("data","countreads_seq211.tsv"), col_names = c("sample","total"))%>%
-  mutate(sample=paste0(sample,".seq2111"))
-total_reads<-bind_rows(mw_total,temporal_total,last_seq_total, seq2111_total)
-metadata_dos<-metadata %>% 
-  inner_join(total_reads,by="sample")
-
 #Escoger especies
 bacteria=c("Klebsiella pneumoniae", "Pseudomonas aeruginosa",
            "Acinetobacter baumanni", "Escherichia coli", 
            "Enterobacter cloacae","Providencia rettgeri")
-
 #Matriz con conteos de Sylph no corregidos por ConQuR
 sylph <- read_tsv(here("data", "abundance_data_export.tsv"))
-#Sequenciamiento del 21/11 añadido, no corregido por ConQuR
-seq2111 <- read_tsv(here("data","final_data.tsv"))%>% 
+seq2111 <- read_tsv(here("data","final_data_seq211.tsv"))%>% 
   rename(conteo=count_reads_each_specie,genome=Contig_name,
          sample=Sample_file) %>% 
-  mutate(sample=str_replace(sample,"^([^\\.]*)(\\..*)","\\1.seq2111"))
+  mutate(sample=str_replace(sample,"^([^\\.]*)(\\..*)","\\1_seq2111"))
+seq1212 <- read_tsv(here("data","final_data_seq1212.tsv"))%>% select(1,4,15) %>% 
+  rename(abundance=Sequence_abundance,genome=Contig_name,
+         sample=Sample_file) %>% 
+  mutate(sample=str_extract(sample,"barcode\\d+"),sample=paste0(sample,"_seq1212")) %>% right_join(seq1212_total, by="sample") %>% mutate(conteo=round((abundance*total)/100)) %>% select(c(1,5,3))
 
 sylph_long<-sylph %>% pivot_longer(
   cols = contains("barcode"), # Selecciona las columnas que contienen los datos de las muestras
@@ -150,8 +166,7 @@ sylph_long<-sylph %>% pivot_longer(
 ) %>% rename(genome=Contig_name)
 sylph_long_sep<-sylph_long %>% 
   mutate(sample = str_remove(sample, "\\.fastq")) %>% 
-  bind_rows(seq2111)
-
+  bind_rows(seq2111,seq1212)
 # Paso 3: Unir `conq_long` con `metadata` por la columna 'sample'
 final_df <- sylph_long_sep %>%
   inner_join(metadata_dos, by = "sample") %>% 
@@ -164,7 +179,7 @@ final_df <- sylph_long_sep %>%
     match <- bacteria[str_detect(.x, bacteria)]
     ifelse(length(match) > 0, match, "Desconocida")
   })) %>% 
-  select(-c("total","sample_conqur"))
+  select(-c("sample_conqur"))
 print(final_df)
 dim(final_df)
 print(sum(final_df$directly_reads))
@@ -178,7 +193,7 @@ combined_df2 <- final_df %>%
     date = dmy(date))%>%  
   filter(
      !str_detect(sample, "Mock ") & 
-    !str_detect(sample, "Negative Control")
+    !str_detect(sample, "Negative")
    ) %>%
   mutate(sample=str_replace(sample,"(^.*)(_.*)","\\1"))
 
@@ -219,7 +234,7 @@ gg <- ggplot(combined_df2, aes(x = date, y = fraction, color = place, shape = pl
     panel.grid.major = element_line(color = "gray85"),
     panel.grid.minor = element_blank()
   )
-ggsave("temporal_variation_pathogen.png", plot = gg, width = 8, height = 6, dpi = 300)
+ggsave("temporal_variation_pathogen.png", plot = gg, width = 8, height = 6, dpi = 300, bg="white")
 ```
 
 ## Grafico de variacion del tamaño de librería
@@ -230,7 +245,7 @@ combined_librarysize <- metadata_dos %>%
     date = dmy(date))%>%  
   filter(
      !str_detect(sample_id, "Mock ") & 
-    !str_detect(sample_id, "Negative Control")
+    !str_detect(sample_id, "Negative")
    ) %>%
   mutate(sample=str_replace(sample_id,"(^.*)(_.*)","\\1")) %>% select(-sample_id)
 # Resumir los datos para las líneas (mediana de fracción por fecha, lugar y especie)
@@ -270,7 +285,7 @@ gg <- ggplot(combined_librarysize, aes(x = date, y = total, color = place, shape
     panel.grid.major = element_line(color = "gray85"),
     panel.grid.minor = element_blank()
   )
-ggsave("libsize_temporal_variation_.png", plot = gg, width = 8, height = 6, dpi = 300)
+ggsave("libsize_temporal_variation_.png", plot = gg, width = 8, height = 6, dpi = 300, bg="white")
 
 ```
 
@@ -334,5 +349,64 @@ gg <- ggplot(combined_df2, aes(x = date, y = fraction, color = place, shape = pl
 ggsave("temporal_variation_pathogen_clinical.png", plot = gg, width = 8, height = 6, dpi = 300)
 
 ```
+## Correlaciones
+```{r}
+# Gráfico 1: Abundance vs Total Reads
+p1 <- ggplot(final_df, aes(x = total, y = fraction)) +
+  geom_point(alpha = 0.6, color = "darkorange") +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "red") +
+  stat_cor(
+    aes(label = paste0(after_stat(rr.label), "~", after_stat(p.label))),
+    color = "black",
+    label.x.npc = "left",
+    label.y.npc = "top",
+    size = 3,
+    parse = TRUE
+  ) +
+  facet_wrap(~ especie, scales = "free") +
+  labs(
+    title = "Correlation between relative abundance and total reads",
+    x = "Total reads",
+    y = "Relative abundance (%)"
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    strip.text = element_text(face = "italic"),  # Titles of facets (italicized species)
+    plot.title = element_text(hjust = 0.5), # Centered italic title
+    axis.text.x = element_text(size = 10), # Reduced axis text size
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 11) # Reduced axis title size
+  )
 
+# Gráfico 2: Direct Reads vs Total Reads
+p2 <- ggplot(final_df, aes(x = total, y = directly_reads)) +
+  geom_point(alpha = 0.6, color = "darkorange") +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "red") +
+  stat_cor(
+    aes(label = paste0(after_stat(rr.label), "~", after_stat(p.label))),
+    color = "black",
+    label.x.npc = "left",
+    label.y.npc = "top",
+    size = 3,
+    parse = TRUE
+  ) +
+  facet_wrap(~ especie, scales = "free") +
+  labs(
+    title = "Correlation between assigned reads and total reads",
+    x = "Total reads",
+    y = "Assigned reads"
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    strip.text = element_text(face = "italic"),  # Titles of facets (italicized species)
+    plot.title = element_text(hjust = 0.5), # Centered italic title
+    axis.text.x = element_text(size = 10), # Reduced axis text size
+    axis.text.y = element_text(size = 8),
+    axis.title = element_text(size = 11) # Reduced axis title size
+  )
+
+# Mostrar gráficos
+ggsave("correlation_abundancevstotalreads.png", plot = p1, width = 8, height = 6, dpi = 300, bg="white")
+ggsave("correlation_assignedreadsvstotalreads.png", plot = p2, width = 8, height = 6, dpi = 300, bg="white")
+```
 
