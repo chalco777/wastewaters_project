@@ -1,0 +1,6 @@
+identifier	Read_Count
+barcode01_TolC_contig_2075	41
+barcode03_TolC_contig_1046	52
+barcode04_TolC_contig_8194	54
+barcode09_TolC_contig_6487	28
+barcode10_TolC_contig_7896	8

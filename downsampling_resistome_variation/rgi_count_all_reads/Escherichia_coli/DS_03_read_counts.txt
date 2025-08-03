@@ -1,0 +1,2 @@
+identifier	Read_Count
+barcode07_Klebsiella pneumoniae KpnH_contig_448	5

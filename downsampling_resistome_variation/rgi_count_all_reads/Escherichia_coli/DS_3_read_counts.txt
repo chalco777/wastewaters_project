@@ -1,0 +1,6 @@
+identifier	Read_Count
+barcode02_TolC_contig_3227	28
+barcode06_Klebsiella pneumoniae KpnH_contig_775	9
+barcode07_TolC_contig_520	30
+barcode09_TolC_contig_4907	13
+barcode11_Klebsiella pneumoniae KpnH_contig_4813	15

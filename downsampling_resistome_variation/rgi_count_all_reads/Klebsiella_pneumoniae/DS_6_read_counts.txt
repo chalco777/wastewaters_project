@@ -1,0 +1,4 @@
+identifier	Read_Count
+barcode07_Klebsiella pneumoniae KpnG_contig_12737	10
+barcode07_Klebsiella pneumoniae KpnH_contig_12737	10
+barcode11_KPC-2_contig_10210	9

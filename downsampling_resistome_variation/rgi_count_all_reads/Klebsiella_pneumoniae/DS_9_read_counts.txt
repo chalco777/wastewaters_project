@@ -1,0 +1,12 @@
+identifier	Read_Count
+barcode02_Klebsiella pneumoniae KpnH_contig_6089	9
+barcode02_OXA-917_contig_2649	12
+barcode03_LptD_contig_14536	7
+barcode03_OXA-917_contig_15833	7
+barcode04_LptD_contig_13269	6
+barcode05_Klebsiella pneumoniae KpnG_contig_10500	9
+barcode05_Klebsiella pneumoniae KpnH_contig_10500	9
+barcode06_LptD_contig_2077	11
+barcode07_Klebsiella pneumoniae KpnG_contig_13961	15
+barcode12_Klebsiella pneumoniae KpnG_contig_15594	6
+barcode12_Klebsiella pneumoniae KpnH_contig_15594	7

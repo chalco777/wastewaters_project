@@ -1,0 +1,5 @@
+identifier	Read_Count
+barcode06_TolC_contig_1870	59
+barcode09_OXA-2_contig_12879	12
+barcode09_TolC_contig_10073	32
+barcode10_TolC_contig_7978	8

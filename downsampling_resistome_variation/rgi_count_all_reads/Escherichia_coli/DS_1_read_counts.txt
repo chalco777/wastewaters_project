@@ -1,0 +1,2 @@
+identifier	Read_Count
+barcode04_marA_contig_721	10

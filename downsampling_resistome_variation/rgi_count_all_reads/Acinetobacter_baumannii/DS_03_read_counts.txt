@@ -1,0 +1,7 @@
+identifier	Read_Count
+barcode01_OXA-441_contig_127	3
+barcode02_adeI_contig_234	8
+barcode02_adeJ_contig_234	9
+barcode07_adeI_contig_358	3
+barcode12_OXA-253_contig_471	8
+barcode12_OXA-253_contig_517	2
