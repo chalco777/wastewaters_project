@@ -1,8 +1,18 @@
 ---
-title: "pcoa_resistome_patho"
+title: "pathogen_resistance"
 output: html_document
 date: "2024-11-10"
 ---
+
+## What is this notebook about?
+
+This notebook builds a resistome ordination for a chosen pathogen (default species <- "Acinetobacter baumannii") across multiple sequencing batches and sites. 
+It loads per-sample resistance–gene counts from four runs (MW/MA_DS9_Crowfoot, L/1405Gb, temporal wastewater/5.2Gb, and LIG_P2/3.8Gb), harmonizes metadata (barcode → sample_id, place, date, batch/folder), reshapes features into genes (and optionally drug classes), filters rows to the target pathogen, and normalizes counts to CPM using total read counts gathered per dataset. 
+From the CPM table it builds a gene × sample matrix, applies log2(CPM+1), computes Bray–Curtis distances (vegan), and runs PCoA (cmdscale) to obtain coordinates and explained variance. 
+Samples are then annotated into biologically interpretable groups (e.g., HMA_baseline/1_week/2_weeks/5_weeks/3_months, INSN-I/II, HCH, Mock) based on place + date, and visualized as PCoA scatterplots colored either by identifier, batch, or date (custom palettes, ggtext labels). 
+To show the drivers of separation, I correlated each resistance gene’s CPM profile with PCo1 (Spearman), applied BH FDR, selected the top 10 genes by absolute correlation, and generated a formatted HTML table. 
+In short, here I show how it integrates runs, normalizes and ordains the pathogen-specific resistome, visualizes grouping and batch effects, and reports the genes most associated with the primary ordination axis.
+
 
 ```{r}
 library(tidyverse)

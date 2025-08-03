@@ -1,8 +1,16 @@
 ---
-title: "Pcoa_resistome"
+title: "Resistome Carbapenem Analysis"
 output: html_document
 date: "2024-11-05"
 ---
+
+## What is this notebook about?
+
+This notebook aggregates carbapenem-gene counts across runs, converts to CPM using sample-specific totals, applies log2(CPM+1), computes Bray–Curtis distances, and performs PCoA to ordain samples, coloring points by biologically meaningful identifiers derived from place+date (e.g., HMA_baseline, INSN-I/II, HCH, Mock). 
+It then ranks drivers of separation by correlating each gene’s CPM profile with a PCoA axis (Spearman, BH-FDR) and exporting the top 10 genes. 
+Other analysis include a batch-colored PCoA and an exploratory category-level PCoA using Drug_Class abundances.
+I built the CPM matrix, ran the ordination, curated palettes/labels for interpretability, generated the top-genes table, and added batch and category analyses.
+I also included a raw ConQuR pass to illustrate batch-effect correction on the carbapenem gene table.
 
 ```{r}
 library(tidyverse)

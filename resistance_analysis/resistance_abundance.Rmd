@@ -1,8 +1,15 @@
 ---
-title: "Temporal Figures Resistance"
+title: "Resistance Abundance Analysis"
 output: html_document
 date: "2024-11-10"
 ---
+
+## What is this notebook about?
+
+In this notebook I merged per-sample resistance-gene counts (MW/MA_DS9_Crowfoot, L/1405Gb, wastewater/5.2Gb, LIG_P2/3.8Gb), and also with metadata (barcode→sample_id, place, date, batch). 
+Then parsed features into Gene and Drug_Class, and joining total read counts to compute percent abundance. 
+From that this notebook first filters to carbapenem genes to produce barplots (means per timepoint/identifier with jittered replicates) for HMA and for INSN/HCH, then expands to six Drug_Class categories (penam, tetracycline, fluoroquinolone, cephalosporin, aminoglycoside, carbapenem) to draw temporal trends by place using median lines with IQR ribbons. 
+Finally, it overlays clinical data by converting Excel dates, filtering isolates with any R call, and adding a histogram on a secondary axis to compare clinical resistance events against metagenomic trends. 
 
 ```{r}
 
