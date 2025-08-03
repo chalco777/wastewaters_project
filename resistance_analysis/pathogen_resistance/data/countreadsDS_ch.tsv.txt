@@ -1,0 +1,11 @@
+barcode01_DS_4.7GB.fastq.gz: 7331256
+barcode02_DS_4.7GB.fastq.gz: 6831432
+barcode04_DS_4.7GB.fastq.gz: 7139996
+barcode06_DS_4.7GB.fastq.gz: 6755396
+barcode07_DS_4.7GB.fastq.gz: 6867892
+barcode08_DS_4.7GB.fastq.gz: 6931736
+barcode09_DS_4.7GB.fastq.gz: 7202156
+barcode10_DS_4.7GB.fastq.gz: 6958872
+barcode11_DS_4.7GB.fastq.gz: 6940032
+barcode13_DS_4.7GB.fastq.gz: 2920752
+barcode14_DS_4.7GB.fastq.gz: 320368
