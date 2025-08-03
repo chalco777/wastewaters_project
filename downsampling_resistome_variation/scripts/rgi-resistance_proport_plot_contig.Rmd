@@ -1,3 +1,18 @@
+
+
+## What is this notebook about?
+In this notebook I analyze RGI summary and read count files at multiple downsampling depths for *Acinetobacter baumannii* (and I did it with other pathogens too), clean and unify them, compute per-identifier resistant gene counts, merge with total reads to derive percent resistant reads, filter out predefined low-quality combinations, and map barcodes to hospital labels.
+I apply a bootstrap routine to estimate medians and 95% confidence intervals of resistant proportions by downsampling level and identifier, aggregate counts for some relevant genes such as OXA-441 and also for all resistance genes, and produce summary tables of resistant fraction.
+I visualize these results with line plots showing median trends over downsampling (GB), overlay bootstrap confidence ribbons and jittered replicate points, and distinguish hospitals using custom colors and shapes in separate plots for the single gene and the combined resistance profile.
+
+## Understanding the notebook
+Input: RGI summary and read count files for *Acinetobacter baumannii* at various downsampling levels, stored in rgi_concatenate and rgi_count_all_reads directories, respectively.
+Output: See `plots` directory for the generated plots.
+
+## Credits
+The plot `downsampling_resistome_variation/plots/proportion_resistant_baumannii.png` and this script 
+was generated together with [Diego Taquiri](https://github.com/diego-taquiri).
+
 ```{r load libraries}
 library(tidyverse)
 library(readr)
