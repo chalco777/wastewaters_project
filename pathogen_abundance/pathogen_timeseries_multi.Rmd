@@ -6,6 +6,12 @@ date: "2025-01-10"
 output: html_document
 ---
 
+What is this notebook about?
+
+Here I assemble cross-run metadata (barcodes, place, date) and total read counts (MW, temporal, 17_set, seq2111, seq1212) to compute pathogen-level **relative abundance (%)** from Sylph outputs (with seq2111/seq1212 harmonized), keeping the legacy ConQuR path disabled. 
+I exclude controls, reshape by species and place, and generate **temporal faceted plots** with median ± IQR as well as **library-size** trends (boxplots + median lines). I then overlay **crude clinical events** as date markers and quantify associations via two **correlation** figures (fraction vs total reads; assigned reads vs total, with linear fits and `ggpubr::stat_cor`), saving all panels as publication-ready PNGs.
+
+
 ## Preparar librerías
 ```{r}
 library(tidyverse)
