@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## What is this document about?
 
 Performs exploratory analysis for abundance metagenomic data variation accross time and sampling sites.
-Per-sample bars, single species, method comparison (Sylph/ConQuR/Kraken), Mock check.
+Per-sample bars, single species, method comparison (Sylph/ConQuR/Kraken), Mock check. Please take a look at the produced images in the `exploratory_pathogen_analysis` folder
 
 ## R Markdown
 ```{r}
@@ -29,16 +29,16 @@ setwd("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance")
 ```{r}
 # Define the color scheme 
 color_scheme <- c("Phenol"="#CAB2D6",
-                  "Zymo Kit"="#1F78B4",
-                  "Phenol + Frag"="#A5CEE3",
-                  "Zymo Kit + Frag"="#6A3D9A")
+          "Zymo Kit"="#1F78B4",
+          "Phenol + Frag"="#A5CEE3",
+          "Zymo Kit + Frag"="#6A3D9A")
 color_scheme2 <- c("NT"="#F89C74", "80 ºC"="#F89897")
 
 my_theme <- theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.y = element_text(size = 14),
-        legend.position = "none", 
-        plot.title.position = "plot",  
-        plot.title = element_text(hjust = 0.5))
+    axis.title.y = element_text(size = 14),
+    legend.position = "none", 
+    plot.title.position = "plot",  
+    plot.title = element_text(hjust = 0.5))
 my_theme2 <- theme(
   axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
   axis.text.y = element_text(size = 12),
@@ -67,54 +67,54 @@ colnames(atemp) <- tolower(colnames(atemp))
 
 ## Prepare the metadata for each barcode from each sequencing folder.
 ```{r}
-# Crear el data frame con los datos proporcionados
+# Create the data frame with the provided data
 met_temp <- data.frame(
   `sample` = c("AR071_1", "AR071_2", "AR071_2", "AR071_2", "AR071_3",
-               "AR072_1", "AR072_1", "AR072_1", "AR072_2", "AR072_2",
-               "AR072_2", "AR072_3", "Mock Community", "Negative Control - Human DNA"),
+         "AR072_1", "AR072_1", "AR072_1", "AR072_2", "AR072_2",
+         "AR072_2", "AR072_3", "Mock Community", "Negative Control - Human DNA"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 )
 
-# Convertir la columna Barcode en el formato barcodeXX
+# Convert the Barcode column to the barcodeXX format
 met_temp$barcode <- sprintf("barcode%02d", met_temp$barcode)
 
-# Mostrar el data frame resultante
+# Show the resulting data frame
 print(met_temp)
 
-# Crear el segundo data frame con los nuevos datos
+# Create the second data frame with the new data
 additional_data <- data.frame(
   sample = c("AR071_1", "AR071_2", "AR071_3", 
-             "AR072_1", "AR072_2", "AR072_3"),
-  place = rep("HMA", 6),  # Columna 'HMA' con valor constante
+       "AR072_1", "AR072_2", "AR072_3"),
+  place = rep("HMA", 6),  # 'HMA' column with constant value
   date = c("13/02/2024", "13/02/2024", "13/02/2024", 
-           "20/02/2024", "20/02/2024", "20/02/2024")
+       "20/02/2024", "20/02/2024", "20/02/2024")
 )
-# Unir ambos data frames por la columna 'sample_of_extraction'
+# Merge both data frames by the 'sample_of_extraction' column
 temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
 
-#Para L
-# Crear el tercer data frame con los datos del 2do intento
+# For L
+# Create the third data frame with the data from the 2nd attempt
 el_met<- data.frame(
   sample = c("AR086", "AR093","AR093","AR093", "AR095", 
-             "Mock Community", "Negative Control - Human DNA"),
+       "Mock Community", "Negative Control - Human DNA"),
   `date` = c("06/05/2024", "22/05/2024", "22/05/2024", "22/05/2024", "27/05/2024", NA, NA),
   place = c("INSN", "HMA", "HMA", "HMA", "INSN",NA, NA),
   `barcode` = c(24, 23, 22, 21, 20, 19, 18)
 )
-# Convertir la columna Barcode al formato barcodeXX en el segundo intento
+# Convert the Barcode column to the barcodeXX format in the second attempt
 el_met$barcode <- sprintf("barcode%02d", el_met$barcode)
 print(el_met)
 
-#Para MW_P2
-# Crear el data frame con los datos proporcionados
+# For MW_P2
+# Create the data frame with the provided data
 mw_met <- data.frame(
   sample = c("AR070_1", "AR070_1", "AR070_1", "AR070_1",
-             "AR070_2", "AR070_2", "AR070_2",
-             "AR070_3", "AR070_3", "AR070_3", "AR070_3",
-             "Mock Community"),
+       "AR070_2", "AR070_2", "AR070_2",
+       "AR070_3", "AR070_3", "AR070_3", "AR070_3",
+       "Mock Community"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13)
 )
-# Añadir las columnas 'HMA' y 'Date' con valores específicos
+# Add the 'HMA' and 'Date' columns with specific values
 mw_met$place <- "HMA"
 mw_met$date <- "06/02/2024"
 mw_met$barcode <- sprintf("barcode%02d", mw_met$barcode)
@@ -128,13 +128,13 @@ last_temp <- data.frame(
 
 seq2111_met<- data.frame(
   sample_id = c("AR073", "AR078", "AR081", "AR087", "AR088", "AR089", "AR090", "AR092", 
-                "Mock community", "Negative Control - Human DNA"),
+        "Mock community", "Negative Control - Human DNA"),
   barcode = paste0("barcode",c(73, 74, 75, 76, 77, 78, 79, 80, 81, 82)),
   place = c("HMA", "HMA", "HCH", "HMA", "HCH", "INSN", "HMA", "INSN", NA, NA),
   date = c("05/03/2024", "10/04/2024", "17/04/2024", "08/05/2024", "08/05/2024", "13/05/2024",
-           "15/05/2024", "20/05/2024", NA, NA))
+       "15/05/2024", "20/05/2024", NA, NA))
 
-# Unir los `data.frames` de metadata (`el_met`, `temp_met`, `mw_met`) en un único `data.frame`
+# Merge the metadata data.frames (`el_met`, `temp_met`, `mw_met`) into a single `data.frame`
 metadata <- bind_rows(
   "1405Gb" = el_met, 
   final_combined = temp_met, 
@@ -151,31 +151,30 @@ metadata<-bind_rows(metadata,last_temp, seq2111_met%>%mutate(sample=paste0(barco
 print(metadata)
 ```
 
-ALL MW: DE ACÁ AL CHUNK "DIRECTO ACÁ"
 ## Keep metadata processing and join metadata with abundance data from each main folder
 ```{r}
-# Transposición y reestructuración del data frame
+# Transpose and restructure the data frame
 atemp_long <- atemp %>%
-  # Seleccionar las columnas de especies y las de los barcodes que contienen reads y fracción
+  # Select the species columns and the barcode columns that contain reads and fraction
   select(name, starts_with("barcode")) %>%
-  # Convertir las columnas de reads y fracción a formato largo
+  # Convert the reads and fraction columns to long format
   pivot_longer(cols = -name, 
-               names_to = c("barcode", "type"), 
-               names_pattern = "(barcode\\d+).(.+)") %>%
-  # Reorganizar para que cada fila sea un barcode-especie con sus valores de reads y fracción
+         names_to = c("barcode", "type"), 
+         names_pattern = "(barcode\\d+).(.+)") %>%
+  # Rearrange so that each row is a barcode-species with its reads and fraction values
   pivot_wider(names_from = type, values_from = value)
 
-# Transposición y reestructuración del data frame
+# Transpose and restructure the data frame
 ael_long <- ael %>%
-  # Seleccionar las columnas de especies y las de los barcodes que contienen reads y fracción
+  # Select the species columns and the barcode columns that contain reads and fraction
   select(name, starts_with("barcode")) %>%
-  # Convertir las columnas de reads y fracción a formato largo
+  # Convert the reads and fraction columns to long format
   pivot_longer(cols = -name, 
-               names_to = c("barcode", "type"), 
-               names_pattern = "(barcode\\d+).(.+)") %>%
-  # Reorganizar para que cada fila sea un barcode-especie con sus valores de reads y fracción
+         names_to = c("barcode", "type"), 
+         names_pattern = "(barcode\\d+).(.+)") %>%
+  # Rearrange so that each row is a barcode-species with its reads and fraction values
   pivot_wider(names_from = type, values_from = value)
-# Mostrar la tabla final con columnas: "barcode", "name", "reads", "fraction"
+# Show the final table with columns: "barcode", "name", "reads", "fraction"
 atemp_long
 ael_long
 
@@ -189,7 +188,7 @@ mw_of <- mw_of %>%
   rename(fraction=fraction_total_reads) %>% 
   mutate(fraction=fraction*100)
 
-# 2. Remover la columna 'total_reads' de los tres data frames
+# 2. Remove the 'total_reads' column from the three data frames
 el_of <- el_of %>%
   rename(fraction=cladereads..) %>% 
   rename(directly_reads=cladereads)
@@ -214,7 +213,6 @@ temps_ofs<-temp_of2 %>% filter(name==esp)
 mw_ofs<-mw_of2 %>% filter(name==esp)
 ```
 
-DIRECTO ACÁ:
 ## Calculate fraction and read count for each pathogen in each sample and make graph
 ```{r}
 library(ggh4x)

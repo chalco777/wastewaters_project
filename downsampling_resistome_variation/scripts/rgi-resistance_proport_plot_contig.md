@@ -1,7 +1,7 @@
 
 
 ## What is this notebook about?
-In this notebook I analyze RGI summary and read count files at multiple downsampling depths for *Acinetobacter baumannii* (and I did it with other pathogens too), clean and unify them, compute per-identifier resistant gene counts, merge with total reads to derive percent resistant reads, filter out predefined low-quality combinations, and map barcodes to hospital labels.
+In this notebook I analyze RGI summary and read count files at multiple downsampling depths for *Acinetobacter baumannii* (and I did it with other pathogens too), clean and unify them, compute per-identifier resistant gene counts, merge with total reads to derive percent resistant reads, filter out low-quality combinations, and map barcodes to hospital labels.
 I apply a bootstrap routine to estimate medians and 95% confidence intervals of resistant proportions by downsampling level and identifier, aggregate counts for some relevant genes such as OXA-441 and also for all resistance genes, and produce summary tables of resistant fraction.
 I visualize these results with line plots showing median trends over downsampling (GB), overlay bootstrap confidence ribbons and jittered replicate points, and distinguish hospitals using custom colors and shapes in separate plots for the single gene and the combined resistance profile.
 
@@ -10,7 +10,7 @@ Input: RGI summary and read count files for *Acinetobacter baumannii* at various
 Output: See `plots` directory for the generated plots.
 
 ## Credits
-The plot `downsampling_resistome_variation/plots/proportion_resistant_baumannii.png` and this script 
+The plot `downsampling_resistome_variation/plots/proportion_resistant_baumannii.png` and part of this script 
 was generated together with [Diego Taquiri](https://github.com/diego-taquiri).
 
 ```{r load libraries}
@@ -91,12 +91,12 @@ my_theme2 <- theme(
 
 Read all the RGI from DS and fasta counts
 ```{r}
-# Definir el vector de tamaños de downsampling y las rutas de archivos
+# Define the vector of downsampling sizes and file paths
 downsampling_sizes <- c("03", "05", "1", "3", "6", "9")
 file_path_reads <- "C:\\Users\\DAVID 21\\OneDrive\\Documentos\\Mirkoslab\\loui\\downsampling\\rgi_concatenate\\Acinetobacter_baumannii\\DS_%s_combined_rgi_summary.tsv"
 file_path_counts <- "C:\\Users\\DAVID 21\\OneDrive\\Documentos\\Mirkoslab\\loui\\downsampling\\rgi_count_all_reads\\Acinetobacter_baumannii\\DS_%s_read_counts.txt"
 
-# Crear una lista de data frames para reads y counts
+# Create a list of data frames for reads and counts
 DS_reads_list <- downsampling_sizes %>%
   map(~ {
     read_tsv(sprintf(file_path_reads, .x)) %>%
@@ -115,12 +115,12 @@ DS_counts_list <- downsampling_sizes %>%
       select(downsamplingGB, everything())
   })
 
-# Asignar cada data frame a su respectiva variable en el entorno global
+# Assign each data frame to its respective variable in the global environment
 list2env(setNames(DS_reads_list, paste0("DS_", downsampling_sizes)), .GlobalEnv)
 list2env(setNames(DS_counts_list, paste0("DS_", downsampling_sizes, "_count")), .GlobalEnv)
 ```
 
-Unifiy all the tables of resistance
+Unify all the tables of resistance
 ```{r}
 all_downsamp <- bind_rows(DS_03, DS_05, DS_1, DS_3, DS_6, DS_9) %>%
   mutate(barcode_name=case_when(
@@ -133,17 +133,17 @@ all_downsamp <- bind_rows(DS_03, DS_05, DS_1, DS_3, DS_6, DS_9) %>%
 
 Get the count of resistance genes per downsampling
 ```{r}
-# Creo mi lista con los nombres de los data frames
+# Create my list with the names of the data frames
 ds_names <- c("DS_03", "DS_05", "DS_1", "DS_3", "DS_6", "DS_9")
 
-# Aplicar la operación de group_by, summarise, y ungroup
+# Apply the group_by, summarise, and ungroup operations
 processed_dfs <- ds_names %>%
-  map(~ get(.x) %>%   # Obtener el data frame usando su nombre
+  map(~ get(.x) %>%   # Get the data frame using its name
         group_by(downsamplingGB, identifier) %>% 
         summarise(resistant_count = n(), .groups = 'drop') %>% 
         ungroup())
 
-# Asignar los data frames procesados a variables con sufijo "_summary" en el entorno global
+# Assign the processed data frames to variables with suffix "_summary" in the global environment
 list2env(setNames(processed_dfs, paste0(ds_names, "_table")), .GlobalEnv)
 
 all_downsamp_table <- all_downsamp %>% 
@@ -170,28 +170,28 @@ all_DS_proportion <- all_downsamp_table %>%
   ))
 all_DS_proportion
 
-###FILTRAR PIPIPI
-# Definir las combinaciones que queremos excluir
+###FILTER PIPIPI
+# Define the combinations we want to exclude
 exclude_combinations <- tibble(
   downsamplingGB = c(9, 9, 9, 9, 6),
   identifier = c("barcode03", "barcode10", "barcode11", "barcode12", "barcode10")
 )
 
-# Aplicar anti_join para eliminar las combinaciones indeseadas
+# Apply anti_join to remove the unwanted combinations
 all_DS_proportion <- all_DS_proportion %>%
   anti_join(exclude_combinations, by = c("downsamplingGB", "identifier"))
 
-# Mostrar el resultado filtrado
+# Show the filtered result
 str(all_DS_proportion)
 
 ```
 
-Make the graphs for each one
+Make the graphs for each relevant CRE gene, changing the name of the gene in `filter(gene == "OXA-441")`
 
 ```{r}
 
 oxa253_data <- all_DS_proportion %>% 
-  filter(gene == "OXA-441") %>% group_by(downsamplingGB, identifier, barcode_name) %>% summarise(mean_proportion=mean(porportion)) #para que salga un punto por cada barcode, y no un punto por cada gen
+  filter(gene == "OXA-441") %>% group_by(downsamplingGB, identifier, barcode_name) %>% summarise(mean_proportion=mean(porportion)) #so that there is one point per barcode, and not one point per gene
 
 p<-ggplot(oxa253_data, aes(x = downsamplingGB, y = mean_proportion)) +
   geom_line(aes(group = barcode_name, color = barcode_name), 
@@ -273,6 +273,7 @@ p<-ggplot(all_resistance, aes(x = downsamplingGB, y = mean_proportion)) +
          group = guide_legend(title = "Hospital"),
          fill = guide_legend(title = "Hospital"))
 ```
+
 
 
 
