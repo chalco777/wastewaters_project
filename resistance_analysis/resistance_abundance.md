@@ -29,7 +29,7 @@ l_data<-read_tsv(here("data","count_L_1405DS.tsv"))
 t_data<-read_tsv(here("data","count_wastewatersch_5.2DS.tsv"))
 last<-read_tsv(here("data","count_LIG_P2_3.8DS.tsv"))
 ```
-#PREPARAR METADATA y TAMAÑO DE LIBRERÍA
+## PREPARE METADATA AND LIBRARY SIZE
 
 ```{r}
 met_temp <- data.frame(
@@ -38,26 +38,26 @@ met_temp <- data.frame(
                              "AR072_2", "AR072_3", "Mock Community", "Negative control - Human DNA"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 )
-# Convertir la columna Barcode en el formato barcodeXX
+# Convert the Barcode column to barcodeXX format
 met_temp$barcode <- sprintf("barcode%02d", met_temp$barcode)
 
-# Mostrar el data frame resultante
+# Show the resulting data frame
 print(met_temp)
 
-# Crear el segundo data frame con los nuevos datos
+# Create the second data frame with the new data
 additional_data <- data.frame(
   sample = c("AR071_1", "AR071_2", "AR071_3", 
                              "AR072_1", "AR072_2", "AR072_3"),
-  place = rep("HMA", 6),  # Columna 'HMA' con valor constante
+  place = rep("HMA", 6),  # 'HMA' column with constant value
   date = c("13/02/2024", "13/02/2024", "13/02/2024", 
              "20/02/2024", "20/02/2024", "20/02/2024")
 )
 
-# Unir ambos data frames por la columna 'sample_of_extraction'
+# Merge both data frames by the 'sample_of_extraction' column
 temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
 
 
-# Crear el tercer data frame con los datos del 2do intento
+# Create the third data frame with the 2nd attempt data
  el_met<- data.frame(
   sample = c("AR086", "AR093","AR093","AR093", "AR095", 
                              "Mock Community", "Negative control - Human DNA"),
@@ -66,7 +66,7 @@ temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
   `barcode` = c(24, 23, 22, 21, 20, 19, 18)
 )
 
-# Convertir la columna Barcode al formato barcodeXX en el segundo intento
+# Convert the Barcode column to barcodeXX format in the second attempt
 el_met$barcode <- sprintf("barcode%02d", el_met$barcode)
 
 mw_met <- data.frame(
@@ -77,7 +77,7 @@ mw_met <- data.frame(
   barcode = c(1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13)
 )
 
-# Añadir las columnas 'HMA' y 'Date' con valores específicos
+# Add the 'HMA' and 'Date' columns with specific values
 mw_met$place <- "HMA"
 mw_met$date <- "06/02/2024"
 mw_met$barcode <- sprintf("barcode%02d", mw_met$barcode)
@@ -124,7 +124,7 @@ temporalDS<-read.table(here("data","countreadsDS_ch.tsv"), col.names = c("sample
 mw_total<-read_tsv(here("data","countreads_mw.tsv.tsv"), col_names = c("sample","total")) 
 ```
 
-##PREPARAR TABLA DE CONTEO DE READS ASOCIADOS A GENES DE RESISTENCIA
+## PREPARE TABLE OF READ COUNTS ASSOCIATED WITH RESISTANCE GENES
 ```{r}
 mw_data <- mw_data %>%
   mutate(
@@ -153,11 +153,11 @@ all_filtered2<-all_filtered %>%
   group_by(sample) %>% summarize(conteo=sum(Conteo))
 ```
 
-#UNIR CONTEOS DE READS CON TAMAÑOS DE LIBRERIA Y METADATA: Gráfico de barras
-Nota: acá use la media (no la mediana), y no incluye los dataframes seq1212 ni seq2111
+## MERGE READ COUNTS WITH LIBRARY SIZES AND METADATA: Barplot
+Note: here I used the mean (not the median), and it does not include the seq1212 or seq2111 dataframes
 ```{r}
-table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Suma total de conteos por muestra
-    fraction = (conteo / total) * 100  # Cálculo de porcentaje
+table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Total sum of counts per sample
+    fraction = (conteo / total) * 100  # Percentage calculation
   ) %>%
   select(-c(total)
 ) %>% inner_join(metadata, by="sample") %>% unite("identifier", place, date, sample_id, sep = "_", remove = FALSE) %>% 
@@ -170,7 +170,7 @@ table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,
   mutate(identifier = gsub("^_|_$", "", identifier)) %>%
   mutate(identifier = gsub("^[[:alnum:]]+_", "", identifier)) %>%
   mutate(
-    # Redefinir 'identifier' según tu nuevo mapeo
+    # Redefine 'identifier' according to your new mapping
     identifier = case_when(
       sample_id == "Mock Community" ~ "Mock Community",
       place == "HMA" & date == as.Date("2024-02-06") ~ "HMA_baseline",
@@ -184,7 +184,7 @@ table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,
       place == "INSN" & date == as.Date("2024-07-08") ~ "INSN-II",
       TRUE ~ place
     ),
-    # Redefinir 'group' según el nuevo 'identifier'
+    # Redefine 'group' according to the new 'identifier'
     group = case_when(
       identifier %in% c("INSN-I_I","INSN-I_II", "INSN-II") ~ "INSN",
       identifier == "HCH" ~ "HCH",
@@ -193,14 +193,14 @@ table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,
     )
   )
 
-# Ordenar 'identifier' por 'group' y 'date'
+# Order 'identifier' by 'group' and 'date'
 table <- table %>%
   arrange(factor(group, levels = c("INSN", "HCH","HMA")), date)
 
-# Actualizar los niveles del factor 'identifier' en el orden deseado
+# Update the levels of the 'identifier' factor in the desired order
 table$identifier <- factor(table$identifier, levels = unique(table$identifier))
 
-# Calcular 'mean_fraction' y 'mean_directly_reads' por 'identifier'
+# Calculate 'mean_fraction' and 'mean_directly_reads' by 'identifier'
 mean_fraction_df <- table %>%
   group_by(identifier, group) %>%
   summarise(
@@ -209,35 +209,35 @@ mean_fraction_df <- table %>%
     .groups = 'drop'
   )
 
-# Asegurar que los niveles del factor 'identifier' coincidan
+# Ensure that the levels of the 'identifier' factor match
 mean_fraction_df$identifier <- factor(mean_fraction_df$identifier, levels = levels(table$identifier))
 esp<-"carbapenem"
 
 
-# Separar los datos en dos dataframes: uno para HMA y otro para INSN y HCH
+# Split the data into two dataframes: one for HMA and one for INSN and HCH
 combined_df2_hma <- table %>% filter(group == "HMA")
 mean_fraction_df2_hma <- mean_fraction_df %>% filter(group == "HMA")
 
 combined_df2_others <- table %>% filter(group %in% c("INSN", "HCH"))
 mean_fraction_df2_others <- mean_fraction_df %>% filter(group %in% c("INSN", "HCH"))
-# Definir la paleta de colores
+# Define the color palette
 palette_colors <- c(
-  "HMA_baseline"   = "#2171B5",  # Azul más oscuro
-  "HMA_1_week"     = "#4292C6",  # Azul intermedio
-  "HMA_2_weeks"    = "#6BAED6",  # Azul más claro
-  "HMA_5_weeks"    = "#9ECAE1",  # Azul aún más claro
-  "HMA_3_months"   = "#2131B5",  # Azul personalizado
-  "INSN-I_I"         = "#74C476",  # Verde intermedio
+  "HMA_baseline"   = "#2171B5",  # Darker blue
+  "HMA_1_week"     = "#4292C6",  # Intermediate blue
+  "HMA_2_weeks"    = "#6BAED6",  # Lighter blue
+  "HMA_5_weeks"    = "#9ECAE1",  # Even lighter blue
+  "HMA_3_months"   = "#2131B5",  # Custom blue
+  "INSN-I_I"         = "#74C476",  # Intermediate green
   "INSN-I_II"      = "#74C476",
-  "INSN-II"        = "#A1D99B",  # Verde más claro
-  "HCH"            = "#6A51A3",  # Púrpura oscuro
-  "Mock Community" = "#F16913",  # Naranja medio
-  "Negative control" = "#CB181D" # Rojo oscuro
+  "INSN-II"        = "#A1D99B",  # Lighter green
+  "HCH"            = "#6A51A3",  # Dark purple
+  "Mock Community" = "#F16913",  # Medium orange
+  "Negative control" = "#CB181D" # Dark red
 )
 
-# Asegurarnos de que los colores correspondan a los niveles de 'identifier'
+# Ensure that the colors correspond to the levels of 'identifier'
 
-# Crear el gráfico para HMA y almacenarlo en 'p_hma'
+# Create the plot for HMA and store it in 'p_hma'
 p_hma <- ggplot() +
   geom_bar(
     data = mean_fraction_df2_hma,
@@ -268,7 +268,7 @@ p_hma <- ggplot() +
     name = "Identifier"
   ) +
   coord_flip() +
-  # Ajustar el eje Y para HMA
+  # Adjust the Y axis for HMA
   scale_y_continuous(
     breaks = if (round(max(combined_df2_hma$fraction)) > 3) {
       seq(1, round(max(combined_df2_hma$fraction)), by = 1)
@@ -298,7 +298,7 @@ p_hma <- ggplot() +
     panel.grid.minor = element_blank()
   )
 
-# Crear el gráfico para INSN y HCH y almacenarlo en 'p_others'
+# Create the plot for INSN and HCH and store it in 'p_others'
 p_others <- ggplot() +
   geom_bar(
     data = mean_fraction_df2_others,
@@ -329,7 +329,7 @@ p_others <- ggplot() +
     name = "Identifier"
   ) +
   coord_flip() +
-  # Ajustar el eje Y para HCH e INSN
+  # Adjust the Y axis for HCH and INSN
   scale_y_continuous(
     breaks = c(0.05, 0.1, 0.15, 0.2),
     expand = expansion(mult = c(0, 0.10))
@@ -357,16 +357,16 @@ ggsave("barplot_carbapenem_resistance_others.png", plot = p_others, width = 8, h
 
 ```
 
-#UNIR CONTEOS CON TAMAÑOS DE LIBRERIA Y METADATA: Gráfico lineal de variación temporal
-Nota: acá sí use la mediana (falta añadir los seq1212 ni seq2111)
+## MERGE COUNTS WITH LIBRARY SIZES AND METADATA: Temporal variation line plot
+Note: here I did use the median (still missing to add seq1212 or seq2111)
 ```{r}
 keywords <- c("penam", "tetracycline", "fluoroquinolone", "cephalosporin", "aminoglycoside", "carbapenem")
 all_filtered2<-all_filtered %>% 
   filter(grepl(paste(keywords, collapse = "|"), Drug_Class)) %>% 
   group_by(sample, Drug_Class) %>% summarize(conteo=sum(Conteo))
 
-table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Suma total de conteos por muestra
-    fraction = (conteo / total) * 100  # Cálculo de porcentaje
+table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Total sum of counts per sample
+    fraction = (conteo / total) * 100  # Percentage calculation
   ) %>%
   select(-c(total)
 ) %>% inner_join(metadata, by="sample")  %>%  filter(
@@ -377,31 +377,31 @@ table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,
     fraction = as.numeric(fraction),
     date = dmy(date)
   )
-# Resumir los datos para las líneas (mediana de fracción por fecha, lugar y especie)
+# Summarize the data for the lines (median fraction by date, place, and species)
 data_summary <- table %>%
   group_by(date, place, Drug_Class) %>%
   summarise(
-    median_fraction = median(fraction, na.rm = TRUE),  # Mediana
-    q1 = quantile(fraction, 0.25, na.rm = TRUE),  # Cuartil inferior
-    q3 = quantile(fraction, 0.75, na.rm = TRUE),   # Cuartil superior
+    median_fraction = median(fraction, na.rm = TRUE),  # Median
+    q1 = quantile(fraction, 0.25, na.rm = TRUE),  # Lower quartile
+    q3 = quantile(fraction, 0.75, na.rm = TRUE),   # Upper quartile
     mean_directly_reads = mean(conteo)
   ) %>%
   ungroup()
 gg <- ggplot(table, aes(x = date, y = fraction, color = place, shape = place)) +
-  # Línea de la mediana
+  # Median line
   geom_line(
     data = data_summary,
     aes(y = median_fraction, group = place),
     size = 0.8
   ) +
-  # Puntos de la mediana con cuartiles (Q1 y Q3)
+  # Median points with quartiles (Q1 and Q3)
   geom_pointrange(
     data = data_summary,
     aes(y = median_fraction, ymin = q1, ymax = q3),
     position = position_dodge(width = 0.7)
   ) +
    facet_wrap(~Drug_Class, scales = "free_y", labeller = labeller(Drug_Class = function(x) {
-    # Remover guiones bajos y convertir a título
+    # Remove underscores and convert to title
     str_to_title(gsub("_", " ", x))
   }))+
   labs(
@@ -422,26 +422,26 @@ ggsave("temporal_variation_resistance.png", plot = gg, width = 8, height = 6, dp
 
 ```
 
-#AÑADIR MUESTRAS CLINICAS AL GRÁFICO LINEAL DE VARIACIÓN TEMPORAL DE CARBAPENÉMICOS
+## ADD CLINICAL SAMPLES TO THE TEMPORAL VARIATION LINE PLOT OF CARBAPENEMS
 ```{r}
 clinical<-read.xlsx(here("data","clinical_HMA_procesados.xlsx"),cols = 1:10, rows = 1:59, colNames = TRUE)
-#Arreglo fechas
-fecha_base <- as.Date("1900-01-01") - 2  # Restamos 2 días para corregir el "error 1900" en Excel
+#Fix dates
+fecha_base <- as.Date("1900-01-01") - 2  # Subtract 2 days to correct the "1900 error" in Excel
 clinical$FECHA_RECEP_MX <- as.Date(clinical$FECHA_RECEP_MX, origin = fecha_base)
 clinical$DATE_ANTIBIO <- as.Date(clinical$DATE_ANTIBIO, origin = fecha_base)
 
-#Elimino filas con NAs
+#Remove rows with NAs
 clinical<-clinical[rowSums(is.na(clinical))==0,]
-#Encuentro indices de columnas informativas
+#Find indices of informative columns
 s_i_r_cols <- grep("S/I/R", names(clinical))
-#Filtro para quedarme con las filas con al menos un R entre las columnas de interés
+#Filter to keep only rows with at least one R in the columns of interest
 clinical<-clinical[rowSums(sapply(clinical[s_i_r_cols], str_detect,"R"))>0,]
 dim(clinical)
 species<-c("Klebsiella pne","Acinetobacter","Pseudomona","Escherichia","Providencia ret","Enterobacter")
 clinical_filtered<-clinical %>% select(3,5) %>% filter(str_detect(BACTERIA,str_c(species, collapse = "|")))
 
-table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Suma total de conteos por muestra
-    fraction = (conteo / total) * 100  # Cálculo de porcentaje
+table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Total sum of counts per sample
+    fraction = (conteo / total) * 100  # Percentage calculation
   ) %>%
   select(-c(total)
 ) %>% inner_join(metadata, by="sample")  %>%  filter(
@@ -452,24 +452,24 @@ table<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,
     fraction = as.numeric(fraction),
     date = dmy(date)
   )
-# Resumir los datos para las líneas (mediana de fracción por fecha, lugar y especie)
+# Summarize the data for the lines (median fraction by date, place, and species)
 data_summary <- table %>%
   group_by(date, place) %>%
   summarise(
-    median_fraction = median(fraction, na.rm = TRUE),  # Mediana
-    q1 = quantile(fraction, 0.25, na.rm = TRUE),  # Cuartil inferior
-    q3 = quantile(fraction, 0.75, na.rm = TRUE),   # Cuartil superior
+    median_fraction = median(fraction, na.rm = TRUE),  # Median
+    q1 = quantile(fraction, 0.25, na.rm = TRUE),  # Lower quartile
+    q3 = quantile(fraction, 0.75, na.rm = TRUE),   # Upper quartile
     mean_directly_reads = mean(conteo)
   ) %>%
   ungroup()
 gg <- ggplot(table, aes(x = date, y = fraction, color = place, shape = place)) +
-  # Línea de la mediana
+  # Median line
   geom_line(
     data = data_summary,
     aes(y = median_fraction, group = place),
     size = 0.8
   ) +
-  # Puntos de la mediana con cuartiles (Q1 y Q3)
+  # Median points with quartiles (Q1 and Q3)
   geom_pointrange(
     data = data_summary,
     aes(y = median_fraction, ymin = q1, ymax = q3),
@@ -491,11 +491,11 @@ gg <- ggplot(table, aes(x = date, y = fraction, color = place, shape = place)) +
 min_date <- min(clinical_filtered$FECHA_RECEP_MX)
 max_date <- max(clinical_filtered$FECHA_RECEP_MX)
 ggc <- gg +
-  # Densidad con rango limitado y sin alterar la escala original
+  # Density with limited range and without altering the original scale
   geom_histogram(
     data = clinical_filtered,
     aes(x = FECHA_RECEP_MX,y = after_stat(count * 0.02)),
-                 bins = 50,  # ajusta el número de bins según necesites
+                 bins = 50,  # adjust the number of bins as needed
                  alpha = 0.5, inherit.aes = FALSE) +
     scale_y_continuous(
     sec.axis = sec_axis(~./0.02, name = "Clinical Resistance Count")
@@ -507,6 +507,7 @@ ggsave("temporal_variation_resistance+clinical.png", plot = ggc, width = 8, heig
 
 
 ```
+
 
 
 

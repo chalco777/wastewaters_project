@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Performs exploratory analysis for abundance metagenomic data variation accross time and sampling sites.
 Per-sample bars, single species, method comparison (Sylph/ConQuR/Kraken), Mock check. Please take a look at the produced images in the `exploratory_pathogen_analysis` folder
 
-## R Markdown
+## Let's load libraries and define color schemes
 ```{r}
 library(tidyverse)
 library(readr)
@@ -22,6 +22,7 @@ library(janitor)
 library(ggplot2)
 library(scales)
 library(boot)
+library(ggh4x)
 library(RColorBrewer)
 setwd("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance")
 ```
@@ -29,16 +30,16 @@ setwd("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance")
 ```{r}
 # Define the color scheme 
 color_scheme <- c("Phenol"="#CAB2D6",
-          "Zymo Kit"="#1F78B4",
-          "Phenol + Frag"="#A5CEE3",
-          "Zymo Kit + Frag"="#6A3D9A")
+      "Zymo Kit"="#1F78B4",
+      "Phenol + Frag"="#A5CEE3",
+      "Zymo Kit + Frag"="#6A3D9A")
 color_scheme2 <- c("NT"="#F89C74", "80 ºC"="#F89897")
 
 my_theme <- theme(axis.text.x = element_text(angle = 45, hjust = 1),
-    axis.title.y = element_text(size = 14),
-    legend.position = "none", 
-    plot.title.position = "plot",  
-    plot.title = element_text(hjust = 0.5))
+  axis.title.y = element_text(size = 14),
+  legend.position = "none", 
+  plot.title.position = "plot",  
+  plot.title = element_text(hjust = 0.5))
 my_theme2 <- theme(
   axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
   axis.text.y = element_text(size = 12),
@@ -55,7 +56,7 @@ my_theme2 <- theme(
 )
 ```
 
-## Read data
+## Upload abundance data from Kraken2+Bracken
 ```{r}
 ael<-read_tsv("all_el.tsv.tsv")
 atemp<-read_tsv("all_temp.tsv.tsv")
@@ -70,8 +71,8 @@ colnames(atemp) <- tolower(colnames(atemp))
 # Create the data frame with the provided data
 met_temp <- data.frame(
   `sample` = c("AR071_1", "AR071_2", "AR071_2", "AR071_2", "AR071_3",
-         "AR072_1", "AR072_1", "AR072_1", "AR072_2", "AR072_2",
-         "AR072_2", "AR072_3", "Mock Community", "Negative Control - Human DNA"),
+     "AR072_1", "AR072_1", "AR072_1", "AR072_2", "AR072_2",
+     "AR072_2", "AR072_3", "Mock Community", "Negative Control - Human DNA"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 )
 
@@ -84,19 +85,19 @@ print(met_temp)
 # Create the second data frame with the new data
 additional_data <- data.frame(
   sample = c("AR071_1", "AR071_2", "AR071_3", 
-       "AR072_1", "AR072_2", "AR072_3"),
+     "AR072_1", "AR072_2", "AR072_3"),
   place = rep("HMA", 6),  # 'HMA' column with constant value
   date = c("13/02/2024", "13/02/2024", "13/02/2024", 
-       "20/02/2024", "20/02/2024", "20/02/2024")
+     "20/02/2024", "20/02/2024", "20/02/2024")
 )
 # Merge both data frames by the 'sample_of_extraction' column
 temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
 
-# For L
+# For L folder
 # Create the third data frame with the data from the 2nd attempt
 el_met<- data.frame(
   sample = c("AR086", "AR093","AR093","AR093", "AR095", 
-       "Mock Community", "Negative Control - Human DNA"),
+     "Mock Community", "Negative Control - Human DNA"),
   `date` = c("06/05/2024", "22/05/2024", "22/05/2024", "22/05/2024", "27/05/2024", NA, NA),
   place = c("INSN", "HMA", "HMA", "HMA", "INSN",NA, NA),
   `barcode` = c(24, 23, 22, 21, 20, 19, 18)
@@ -109,9 +110,9 @@ print(el_met)
 # Create the data frame with the provided data
 mw_met <- data.frame(
   sample = c("AR070_1", "AR070_1", "AR070_1", "AR070_1",
-       "AR070_2", "AR070_2", "AR070_2",
-       "AR070_3", "AR070_3", "AR070_3", "AR070_3",
-       "Mock Community"),
+     "AR070_2", "AR070_2", "AR070_2",
+     "AR070_3", "AR070_3", "AR070_3", "AR070_3",
+     "Mock Community"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13)
 )
 # Add the 'HMA' and 'Date' columns with specific values
@@ -128,11 +129,11 @@ last_temp <- data.frame(
 
 seq2111_met<- data.frame(
   sample_id = c("AR073", "AR078", "AR081", "AR087", "AR088", "AR089", "AR090", "AR092", 
-        "Mock community", "Negative Control - Human DNA"),
+    "Mock community", "Negative Control - Human DNA"),
   barcode = paste0("barcode",c(73, 74, 75, 76, 77, 78, 79, 80, 81, 82)),
   place = c("HMA", "HMA", "HCH", "HMA", "HCH", "INSN", "HMA", "INSN", NA, NA),
   date = c("05/03/2024", "10/04/2024", "17/04/2024", "08/05/2024", "08/05/2024", "13/05/2024",
-       "15/05/2024", "20/05/2024", NA, NA))
+     "15/05/2024", "20/05/2024", NA, NA))
 
 # Merge the metadata data.frames (`el_met`, `temp_met`, `mw_met`) into a single `data.frame`
 metadata <- bind_rows(
@@ -151,7 +152,7 @@ metadata<-bind_rows(metadata,last_temp, seq2111_met%>%mutate(sample=paste0(barco
 print(metadata)
 ```
 
-## Keep metadata processing and join metadata with abundance data from each main folder
+## Keep metadata processing and join metadata with abundance data from each main folder. At the end of this chunck, we filter to get the info from the abundance of one pathogen of interest
 ```{r}
 # Transpose and restructure the data frame
 atemp_long <- atemp %>%
@@ -159,8 +160,8 @@ atemp_long <- atemp %>%
   select(name, starts_with("barcode")) %>%
   # Convert the reads and fraction columns to long format
   pivot_longer(cols = -name, 
-         names_to = c("barcode", "type"), 
-         names_pattern = "(barcode\\d+).(.+)") %>%
+     names_to = c("barcode", "type"), 
+     names_pattern = "(barcode\\d+).(.+)") %>%
   # Rearrange so that each row is a barcode-species with its reads and fraction values
   pivot_wider(names_from = type, values_from = value)
 
@@ -170,8 +171,8 @@ ael_long <- ael %>%
   select(name, starts_with("barcode")) %>%
   # Convert the reads and fraction columns to long format
   pivot_longer(cols = -name, 
-         names_to = c("barcode", "type"), 
-         names_pattern = "(barcode\\d+).(.+)") %>%
+     names_to = c("barcode", "type"), 
+     names_pattern = "(barcode\\d+).(.+)") %>%
   # Rearrange so that each row is a barcode-species with its reads and fraction values
   pivot_wider(names_from = type, values_from = value)
 # Show the final table with columns: "barcode", "name", "reads", "fraction"
@@ -205,170 +206,168 @@ temp_of<- temp_of %>%
 el_of2 <- el_of %>% filter(!is.na(date))
 temp_of2 <- temp_of %>% filter(!is.na(date))
 mw_of2 <- mw_of %>% filter(!is.na(date)) %>% filter(sample!="Mock Community")
-##DEFINIR ESPECIE
+##DEFIne species
 esp<-"Escherichia coli"
-###FILTRAR POR ESPECIE
+###Filter by species
 el_ofs<-el_of2 %>% filter(name==esp)
 temps_ofs<-temp_of2 %>% filter(name==esp)
 mw_ofs<-mw_of2 %>% filter(name==esp)
 ```
 
-## Calculate fraction and read count for each pathogen in each sample and make graph
+## Calculate fraction and read count for the pathogen in each sample (barcode) and make graph
 ```{r}
-library(ggh4x)
-# Cargar las librerías necesarias
-# Unir las columnas 'place', 'date' y 'sample' en 'identifier' sin eliminar las columnas originales
+# Join the columns 'place', 'date', and 'sample' into 'identifier' without removing the original columns
 el_off <- el_ofs %>% unite("identifier", place, date, sample, sep = "_", remove = FALSE)
 temp_off <- temps_ofs %>% unite("identifier", place, date, sample, sep = "_", remove = FALSE)
 mw_off <- mw_ofs %>% unite("identifier", place, date, sample, sep = "_", remove = FALSE)
 
-# Unir los tres data frames
+# Join the three data frames
 combined_df <- bind_rows(el_off, temp_off, mw_off)
 
-# Convertir 'fraction' a numérico y 'date' a formato fecha
+# Convert 'fraction' to numeric and 'date' to date format
 combined_df <- combined_df %>%
   mutate(
-    fraction = as.numeric(fraction),
-    date = dmy(date)
+  fraction = as.numeric(fraction),
+  date = dmy(date)
   )
 
-# Modificar 'identifier' para eliminar 'AR0...' pero conservar el sufijo
+# Modify 'identifier' to remove 'AR0...' but keep the suffix
 combined_df <- combined_df %>%
   mutate(identifier = gsub("AR0\\d+(_\\d+)?", "\\1", identifier)) %>%
   mutate(identifier = gsub("_+", "_", identifier)) %>%
   mutate(identifier = gsub("^_|_$", "", identifier)) %>%
   mutate(identifier = gsub("^[[:alnum:]]+_", "", identifier))
 
-# Crear la columna 'group' basada en 'place'
+# Create the 'group' column based on 'place'
 combined_df <- combined_df %>%
   mutate(group = ifelse(place == "INSN", "INSN", "HMA"))
 
-# Ordenar 'identifier' por 'group' y 'date'
+# Sort 'identifier' by 'group' and 'date'
 combined_df <- combined_df %>%
   arrange(factor(group, levels = c("INSN", "HMA")), date)
 
-# Actualizar los niveles del factor 'identifier' en el orden deseado
+# Update the factor levels of 'identifier' in the desired order
 combined_df$identifier <- factor(combined_df$identifier, levels = unique(combined_df$identifier))
 
-# Calcular 'mean_fraction' y 'mean_directly_reads' por 'identifier'
+# Calculate 'mean_fraction' and 'mean_directly_reads' by 'identifier'
 mean_fraction_df <- combined_df %>%
   group_by(identifier, group) %>%
   summarise(
-    mean_fraction = mean(fraction),
-    mean_directly_reads = mean(directly_reads),
-    .groups = 'drop'
+  mean_fraction = mean(fraction),
+  mean_directly_reads = mean(directly_reads),
+  .groups = 'drop'
   )
 
-# Asegurar que los niveles del factor 'identifier' coincidan
+# Ensure that the factor levels of 'identifier' match
 mean_fraction_df$identifier <- factor(mean_fraction_df$identifier, levels = levels(combined_df$identifier))
 
-# Crear el gráfico
+# Create the plot
 p <- ggplot() +
   geom_bar(
-    data = mean_fraction_df,
-    aes(x = identifier, y = mean_fraction, fill = mean_fraction),
-    stat = "identity",
-    width = 0.6
+  data = mean_fraction_df,
+  aes(x = identifier, y = mean_fraction, fill = mean_fraction),
+  stat = "identity",
+  width = 0.6
   ) +
   geom_text(
-    data = mean_fraction_df,
-    aes(
-      x = identifier,
-      y = mean_fraction,
-      label = paste0("     n=", round(mean_directly_reads))
-    ),
-    hjust = 0,
-    size = 2.5
+  data = mean_fraction_df,
+  aes(
+    x = identifier,
+    y = mean_fraction,
+    label = paste0("     n=", round(mean_directly_reads))
+  ),
+  hjust = 0,
+  size = 2.5
   ) +
   geom_point(
-    data = combined_df,
-    aes(x = identifier, y = fraction),
-    color = "black",
-    size = 1.5,
-    position = position_jitter(width = 0.1, height = 0)
+  data = combined_df,
+  aes(x = identifier, y = fraction),
+  color = "black",
+  size = 1.5,
+  position = position_jitter(width = 0.1, height = 0)
   ) +
   scale_fill_gradient(
-    low = "#FF7F0E",
-    high = "#1F77B4",
-    name = "Mean\nPercentage"
+  low = "#FF7F0E",
+  high = "#1F77B4",
+  name = "Mean\nPercentage"
   ) +
   coord_flip() +
-  # Usar facet_wrap2 con escalas libres en el eje Y
+  # Use facet_wrap2 with free scales on the Y axis
   facet_wrap2(
-    ~ group,
-    scales = "free",
-    ncol = 1
+  ~ group,
+  scales = "free",
+  ncol = 1
   ) +
-  # Ajustar el eje Y para cada faceta
+  # Adjust the Y axis for each facet
   facetted_pos_scales(
-    y = list(
-      group == "INSN" ~ scale_y_continuous(labels = function(breaks) {
-    # Personalizar etiquetas: 0.25 con 2 decimales, el resto con 1 decimal
-    sapply(breaks, function(x) sprintf("%.1f", x))},
-    expand = expansion(mult = c(0, 0.10))),
-            group == "HMA" ~ scale_y_continuous(  breaks = if (round(max(combined_df$fraction)) > 3) {
-  # Si el valor máximo redondeado es mayor a 3, solo mostrar enteros
+  y = list(
+    group == "INSN" ~ scale_y_continuous(labels = function(breaks) {
+  # Customize labels: 0.25 with 2 decimals, the rest with 1 decimal
+  sapply(breaks, function(x) sprintf("%.1f", x))},
+  expand = expansion(mult = c(0, 0.10))),
+      group == "HMA" ~ scale_y_continuous(  breaks = if (round(max(combined_df$fraction)) > 3) {
+  # If the maximum rounded value is greater than 3, only show integers
   seq(1, round(max(combined_df$fraction)), by = 1)
 } else {
-  # Caso contrario, mostrar los valores especificados
+  # Otherwise, show the specified values
   c(0, 0.25, 0.5, seq(1, round(max(combined_df$fraction))))
 },labels = function(breaks) {
-    # Personalizar etiquetas: 0.25 con 2 decimales, el resto con 1 decimal
-    sapply(breaks, function(x) ifelse(x == 0.25, sprintf("%.2f", x), sprintf("%.1f", x)))
+  # Customize labels: 0.25 with 2 decimals, the rest with 1 decimal
+  sapply(breaks, function(x) ifelse(x == 0.25, sprintf("%.2f", x), sprintf("%.1f", x)))
   },
-expand = expansion(mult = c(0, 0.10))))) +
+expand = expansion(mult = c(0, 0.10)))))
+  +
   theme_minimal(base_size = 14) +
   labs(
-    title = bquote("Mean percentage of " * italic(.(esp)) * " reads"),
-    x = "Sample",
-    y = "Read percentage"
+  title = bquote("Mean percentage of " * italic(.(esp)) * " reads"),
+  x = "Sample",
+  y = "Read percentage"
   ) +
   theme(
-    axis.text.y = element_text(size = 12),
-    axis.title.y = element_text(size = 14),
-    axis.title.x = element_text(size = 14),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    legend.position = "right",
-    panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
-    panel.grid.minor = element_blank()
+  axis.text.y = element_text(size = 12),
+  axis.title.y = element_text(size = 14),
+  axis.title.x = element_text(size = 14),
+  legend.title = element_text(size = 14),
+  legend.text = element_text(size = 12),
+  plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  legend.position = "right",
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
+  panel.grid.minor = element_blank()
   )
 
-# Mostrar el gráfico
+# Show the plot
 print(p)
 ```
 
-## Process CONQUR abundance normalization results
-PROCESAR RESULTADO DE CONQUR. DIRECTO ACÁ LUEGO DE CARGAR METADATA
+## Process Sylph+CONQUR abundance normalization results. 
 ```{r}
 conq<-read_tsv("ConQuR_corrected_matrix.tsv")
 sylph<-read_tsv("abundance_data_export.tsv")
 library(tidyverse)
 
-# Paso 1: Transponer `conq` usando pivot_longer para crear columnas de 'genome' y 'conteo'
+# Step 1: Transpose `conq` using pivot_longer to create 'genome' and 'conteo' columns
 conq_long <- conq %>% pivot_longer(-sample, names_to = "genome", values_to = "conteo")
 sylph_long<-sylph %>% pivot_longer(
-      cols = contains("barcode"), # Selecciona las columnas que contienen los datos de las muestras
-    names_to = "sample",          # Nombre de la nueva columna que contendrá los nombres de las muestras
-    values_to = "conteo"           # Nombre de la nueva columna que contendrá los valores
+    cols = contains("barcode"), # Selects the columns containing the sample data
+  names_to = "sample",          # Name of the new column that will contain the sample names
+  values_to = "conteo"           # Name of the new column that will contain the values
   ) %>% rename(genome=Contig_name)
-##AÑADIENDO ULTIMO SECUENCIAMIENTO
+##ADDING LAST SEQUENCING
 last_temp <- data.frame(
   sample_id = c("AR083_1", "AR083_2", "AR083_3", "AR113_1", "AR113_2", "AR113_3", "AR074", "Mock Community", "Negative Control - Human DNA"),
   barcode = paste0("barcode0",c(1, 2, 3, 4, 5, 6, 7, 8, 9)),
   place = c("HCH", "HCH", "HCH", "INSN", "INSN", "INSN", "HMA", NA, NA),
   date = c("24/04/2024", "24/04/2024", "24/04/2024", "08/07/2024", "08/07/2024", "08/07/2024", "12/03/2024", NA, NA))
-# Paso 2: Unir los `data.frames` de metadata (`el_met`, `temp_met`, `mw_met`) en un único `data.frame`
+# Step 2: Join the metadata data.frames (`el_met`, `temp_met`, `mw_met`) into a single `data.frame`
 
 
 seq2111_met<- data.frame(
   sample_id = c("AR073", "AR078", "AR081", "AR087", "AR088", "AR089", "AR090", "AR092", 
-                "Mock community", "Negative Control - Human DNA"),
+        "Mock community", "Negative Control - Human DNA"),
   barcode = paste0("barcode",c(73, 74, 75, 76, 77, 78, 79, 80, 81, 82)),
   place = c("HMA", "HMA", "HCH", "HMA", "HCH", "INSN", "HMA", "INSN", NA, NA),
   date = c("05/03/2024", "10/04/2024", "17/04/2024", "08/05/2024", "08/05/2024", "13/05/2024",
-           "15/05/2024", "20/05/2024", NA, NA))
+       "15/05/2024", "20/05/2024", NA, NA))
 
 metadata<-bind_rows(metadata,last_temp, seq2111_met%>%mutate(sample=barcode))
 
@@ -386,7 +385,7 @@ metadata <- bind_rows(
 last_temp<-last_temp %>% mutate(sample=str_c("17_set",barcode, sep="_"))
 metadata<-bind_rows(metadata,last_temp)
 
-##ACÁ AÑADIR EL NUMERO TOTAL DE READS PARA ENCONTRAR LA FRACCION DE BAUMANNII
+##HERE ADD THE TOTAL NUMBER OF READS TO FIND THE FRACTION OF BAUMANNII
 last_seq_total<-read_tsv("countreads_17sset.tsv.tsv", col_names = c("sample","total"))%>% 
   mutate(sample=paste0("17_set_",sample))
 temporal_total<-read_tsv("countreads_ch.tsv.tsv", col_names = c("sample","total"))
@@ -396,14 +395,14 @@ seq2111_total<-read_tsv("countreads_seq211.tsv", col_names = c("sample","total")
 total_reads<-bind_rows(mw_total,temporal_total,last_seq_total, seq2111_total)
 
 sylph_long_sep<-sylph_long %>% 
-    mutate(sample = str_remove(sample, "\\.fastq"))
+  mutate(sample = str_remove(sample, "\\.fastq"))
 conq_long_sep<- conq_long %>%
   mutate(sample = str_remove(sample, "\\.fastq"))
 metadata_dos<-metadata %>% 
   inner_join(total_reads,by="sample")
 
 bacteria="Klebsiella pneumoniae"
-# Paso 3: Unir `conq_long` con `metadata` por la columna 'sample'
+# Step 3: Join `conq_long` with `metadata` by the 'sample' column
 final_df <- conq_long_sep %>%
   inner_join(metadata_dos, by = "sample") %>% 
   rename(name=genome) %>% 
@@ -415,218 +414,218 @@ final_df <- conq_long_sep %>%
   filter(str_detect(name, bacteria)) %>% 
   select(-c("total","sample_conqur"))
 ```
-Figura
+## Now let's see how the figure changes for the same pathogen using these tools
 
 ```{r}
-# Convertir 'fraction' a numérico y 'date' a formato fecha
+# Convert 'fraction' to numeric and 'date' to date format
 combined_df2 <- final_df %>%
   mutate(
-    fraction = as.numeric(fraction),
-    date = dmy(date))# %>%  
+  fraction = as.numeric(fraction),
+  date = dmy(date))# %>%  
   #filter(
-     #!str_detect(sample, "Mock Community") & 
-    # !str_detect(sample, "Negative Control")
+   #!str_detect(sample, "Mock Community") & 
+  # !str_detect(sample, "Negative Control")
    #)
 combined_df2 <- combined_df2 %>%
   separate(identifier, into = c("parte1", "fecha", "parte3", "sufijo"), sep = "_") %>%
   unite("identifier", fecha, sufijo, sep = "_") %>% select(-c("parte1","parte3")) %>% mutate(identifier = str_remove(identifier, "_NA$"))
 
-# Asegurarnos de que los datos están ordenados como antes
+# Make sure the data is ordered as before
 
-# Crear la columna 'group' basada en 'place' (como antes)
+# Create the 'group' column based on 'place' (as before)
 combined_df2 <- combined_df2 %>%
   mutate(group = case_when(
-    sample =="Mock Community" ~"Mock Community",
-    str_detect(sample, "Negative Control") ~ "Negative Control",
-    place == "INSN" ~ "INSN",
-    place == "HMA" ~ "HMA",
-    TRUE ~ "HCH"  # Asigna "HCH" si no es ni "INSN" ni "HMA"
+  sample =="Mock Community" ~"Mock Community",
+  str_detect(sample, "Negative Control") ~ "Negative Control",
+  place == "INSN" ~ "INSN",
+  place == "HMA" ~ "HMA",
+  TRUE ~ "HCH"  # Assigns "HCH" if it is neither "INSN" nor "HMA"
   ))
 
-# Extraer la fecha y el número del 'identifier'
+# Extract the date and number from 'identifier'
 combined_df2 <- combined_df2 %>%
   mutate(
-    number_from_id = as.numeric(sub(".*_", "", identifier))
+  number_from_id = as.numeric(sub(".*_", "", identifier))
   )
 
-# Modificar 'identifier' solo para HMA
+# Modify 'identifier' only for HMA
 combined_df2 <- combined_df2 %>%
   mutate(
-    identifier = case_when(
-      sample == "Mock Community" ~ "Mock Community",
-      str_detect(sample, "Negative Control") ~ "Negative Control",
-      place == "HMA" & date == as.Date("2024-02-06") ~ "HMA_baseline",
-      place == "HMA" & date == as.Date("2024-02-13") ~ "HMA_1_week",
-      place == "HMA" & date == as.Date("2024-02-20") ~ "HMA_2_weeks",
-      place == "HMA" & date == as.Date("2024-03-12") ~ "HMA_5_weeks",
-      place == "HMA" & date == as.Date("2024-05-22") ~ "HMA_3_months",
-      place == "INSN" & date == as.Date("2024-05-06") ~ "INSN-I_I",
-      place == "INSN" & date == as.Date("2024-05-27")~
-        "INSN-I_II",
-      place == "INSN" & date == as.Date("2024-07-08") ~ "INSN-II",
-      TRUE ~ place
+  identifier = case_when(
+    sample == "Mock Community" ~ "Mock Community",
+    str_detect(sample, "Negative Control") ~ "Negative Control",
+    place == "HMA" & date == as.Date("2024-02-06") ~ "HMA_baseline",
+    place == "HMA" & date == as.Date("2024-02-13") ~ "HMA_1_week",
+    place == "HMA" & date == as.Date("2024-02-20") ~ "HMA_2_weeks",
+    place == "HMA" & date == as.Date("2024-03-12") ~ "HMA_5_weeks",
+    place == "HMA" & date == as.Date("2024-05-22") ~ "HMA_3_months",
+    place == "INSN" & date == as.Date("2024-05-06") ~ "INSN-I_I",
+    place == "INSN" & date == as.Date("2024-05-27")~
+    "INSN-I_II",
+    place == "INSN" & date == as.Date("2024-07-08") ~ "INSN-II",
+    TRUE ~ place
   ))
 
 palette_colors <- c(
-  "HMA_baseline"   = "#2171B5",  # Azul más oscuro
-  "HMA_1_week"     = "#4292C6",  # Azul intermedio
-  "HMA_2_weeks"    = "#6BAED6",  # Azul más claro
-  "HMA_5_weeks"    = "#9ECAE1",  # Azul aún más claro
-  "HMA_3_months"   = "#2131B5",  # Azul personalizado
-  "INSN-I_I"         = "#74C476",  # Verde intermedio
+  "HMA_baseline"   = "#2171B5",  # Darker blue
+  "HMA_1_week"     = "#4292C6",  # Intermediate blue
+  "HMA_2_weeks"    = "#6BAED6",  # Lighter blue
+  "HMA_5_weeks"    = "#9ECAE1",  # Even lighter blue
+  "HMA_3_months"   = "#2131B5",  # Custom blue
+  "INSN-I_I"         = "#74C476",  # Intermediate green
   "INSN-I_II"      = "#74C476",
-  "INSN-II"        = "#A1D99B",  # Verde más claro
-  "HCH"            = "#6A51A3",  # Púrpura oscuro
-  "Mock Community" = "#F16913",  # Naranja medio
-  "Negative Control" = "#CB181D" # Rojo oscuro
+  "INSN-II"        = "#A1D99B",  # Lighter green
+  "HCH"            = "#6A51A3",  # Dark purple
+  "Mock Community" = "#F16913",  # Medium orange
+  "Negative Control" = "#CB181D" # Dark red
 )
-# Ordenar 'identifier' por 'group', 'date' y 'number_from_id'
+# Sort 'identifier' by 'group', 'date', and 'number_from_id'
 combined_df2 <- combined_df2 %>%
   arrange(
-    factor(group, levels = c("INSN", "HCH", "HMA")),
-    date,
-    number_from_id
+  factor(group, levels = c("INSN", "HCH", "HMA")),
+  date,
+  number_from_id
   )
 
-# Actualizar los niveles del factor 'identifier' en el orden deseado
+# Update the factor levels of 'identifier' in the desired order
 combined_df2$identifier <- factor(combined_df2$identifier, levels = unique(combined_df2$identifier))
 
-# Calcular 'mean_fraction' y 'mean_directly_reads' por 'identifier' y 'group'
+# Calculate 'mean_fraction' and 'mean_directly_reads' by 'identifier' and 'group'
 mean_fraction_df2 <- combined_df2 %>%
   group_by(identifier, group) %>%
   summarise(
-    mean_fraction = mean(fraction),
-    mean_directly_reads = mean(directly_reads),
-    .groups = 'drop'
+  mean_fraction = mean(fraction),
+  mean_directly_reads = mean(directly_reads),
+  .groups = 'drop'
   )
 
-# Asegurar que los niveles del factor 'identifier' coincidan en ambos dataframes
+# Ensure that the factor levels of 'identifier' match in both dataframes
 mean_fraction_df2$identifier <- factor(mean_fraction_df2$identifier, levels = levels(combined_df2$identifier))
 
-# Separar los datos en dos dataframes: uno para HMA y otro para INSN y HCH
+# Split the data into two dataframes: one for HMA and another for INSN and HCH
 combined_df2_hma <- combined_df2 %>% filter(group %in% c("HMA", "Mock Community", "Negative Control"))
 mean_fraction_df2_hma <- mean_fraction_df2 %>% filter(group %in% c("HMA", "Mock Community", "Negative Control"))
 
 combined_df2_others <- combined_df2 %>% filter(group %in% c("HCH", "INSN", "Mock Community", "Negative Control"))
 mean_fraction_df2_others <- mean_fraction_df2 %>% filter(group %in% c("HCH", "INSN", "Mock Community", "Negative Control"))
-# Crear el gráfico para HMA y almacenarlo en 'p_hma'
+# Create the plot for HMA and store it in 'p_hma'
 p_hma <- ggplot() +
   geom_bar(
-    data = mean_fraction_df2_hma,
-    aes(x = identifier, y = mean_fraction, fill = identifier),
-    stat = "identity",
-    width = 0.6,
-    show.legend=FALSE
+  data = mean_fraction_df2_hma,
+  aes(x = identifier, y = mean_fraction, fill = identifier),
+  stat = "identity",
+  width = 0.6,
+  show.legend=FALSE
   ) +
   geom_text(
-    data = mean_fraction_df2_hma,
-    aes(
-      x = identifier,
-      y = mean_fraction,
-      label = paste0("     n=", round(mean_directly_reads))
-    ),
-    hjust = 0,
-    size = 2.5
+  data = mean_fraction_df2_hma,
+  aes(
+    x = identifier,
+    y = mean_fraction,
+    label = paste0("     n=", round(mean_directly_reads))
+  ),
+  hjust = 0,
+  size = 2.5
   ) +
   geom_point(
-    data = combined_df2_hma,
-    aes(x = identifier, y = fraction),
-    color = "black",
-    size = 1.5,
-    position = position_jitter(width = 0.1, height = 0)
+  data = combined_df2_hma,
+  aes(x = identifier, y = fraction),
+  color = "black",
+  size = 1.5,
+  position = position_jitter(width = 0.1, height = 0)
   ) +
   scale_fill_manual(
-    values = palette_colors,
-    name = "Identifier"
+  values = palette_colors,
+  name = "Identifier"
   ) +
   coord_flip() +
-  # Ajustar el eje Y para HMA
+  # Adjust the Y axis for HMA
   scale_y_continuous(
-    breaks = if (round(max(combined_df2_hma$fraction)) > 3) {
-      seq(1, round(max(combined_df2_hma$fraction)), by = 1)
-    } else {
-      c(0, 0.25, 0.5, seq(1, round(max(combined_df2_hma$fraction))))
-    },
-    labels = function(breaks) {
-      sapply(breaks, function(x) ifelse(x == 0.25, sprintf("%.2f", x), sprintf("%.1f", x)))
-    },
-    expand = expansion(mult = c(0, 0.10))
+  breaks = if (round(max(combined_df2_hma$fraction)) > 3) {
+    seq(1, round(max(combined_df2_hma$fraction)), by = 1)
+  } else {
+    c(0, 0.25, 0.5, seq(1, round(max(combined_df2_hma$fraction))))
+  },
+  labels = function(breaks) {
+    sapply(breaks, function(x) ifelse(x == 0.25, sprintf("%.2f", x), sprintf("%.1f", x)))
+  },
+  expand = expansion(mult = c(0, 0.10))
   ) +
   theme_minimal(base_size = 14) +
   labs(
-    title = bquote("Mean percentage of " * italic(.(bacteria)) * " reads - HMA"),
-    x = "Sample",
-    y = "Read percentage"
+  title = bquote("Mean percentage of " * italic(.(bacteria)) * " reads - HMA"),
+  x = "Sample",
+  y = "Read percentage"
   ) +
   theme(
-    axis.text.y = element_text(size = 10),
-    axis.title.y = element_text(size = 14),
-    axis.title.x = element_text(size = 14),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    legend.position = "right",
-    panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
-    panel.grid.minor = element_blank()
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 14),
+  axis.title.x = element_text(size = 14),
+  legend.title = element_text(size = 14),
+  legend.text = element_text(size = 12),
+  plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  legend.position = "right",
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
+  panel.grid.minor = element_blank()
   )
 
-# Crear el gráfico para INSN y HCH y almacenarlo en 'p_others'
+# Create the plot for INSN and HCH and store it in 'p_others'
 p_others <- ggplot() +
   geom_bar(
-    data = mean_fraction_df2_others,
-    aes(x = identifier, y = mean_fraction, fill = identifier),
-    stat = "identity",
-    width = 0.6,
-    show.legend=FALSE
+  data = mean_fraction_df2_others,
+  aes(x = identifier, y = mean_fraction, fill = identifier),
+  stat = "identity",
+  width = 0.6,
+  show.legend=FALSE
   ) +
   geom_text(
-    data = mean_fraction_df2_others,
-    aes(
-      x = identifier,
-      y = mean_fraction,
-      label = paste0("     n=", round(mean_directly_reads))
-    ),
-    hjust = 0,
-    size = 2.5
+  data = mean_fraction_df2_others,
+  aes(
+    x = identifier,
+    y = mean_fraction,
+    label = paste0("     n=", round(mean_directly_reads))
+  ),
+  hjust = 0,
+  size = 2.5
   ) +
   geom_point(
-    data = combined_df2_others,
-    aes(x = identifier, y = fraction),
-    color = "black",
-    size = 1.5,
-    position = position_jitter(width = 0.1, height = 0)
+  data = combined_df2_others,
+  aes(x = identifier, y = fraction),
+  color = "black",
+  size = 1.5,
+  position = position_jitter(width = 0.1, height = 0)
   ) +
   scale_fill_manual(
-    values = palette_colors,
-    name = "Identifier"
+  values = palette_colors,
+  name = "Identifier"
   ) +
   coord_flip() +
-  # Ajustar el eje Y para INSN y HCH
+  # Adjust the Y axis for INSN and HCH
   scale_y_continuous(
-    labels = function(breaks) {
-      sapply(breaks, function(x) sprintf("%.1f", x))
-    },
-    expand = expansion(mult = c(0, 0.10))
+  labels = function(breaks) {
+    sapply(breaks, function(x) sprintf("%.1f", x))
+  },
+  expand = expansion(mult = c(0, 0.10))
   ) +
   theme_minimal(base_size = 14) +
   labs(
-    title = bquote("Mean percentage of " * italic(.(bacteria)) * " reads - INSN and HCH"),
-    x = "Sample",
-    y = "Read percentage"
+  title = bquote("Mean percentage of " * italic(.(bacteria)) * " reads - INSN and HCH"),
+  x = "Sample",
+  y = "Read percentage"
   ) +
   theme(
-    axis.text.y = element_text(size = 10),
-    axis.title.y = element_text(size = 14),
-    axis.title.x = element_text(size = 14),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    legend.position = "right",
-    panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
-    panel.grid.minor = element_blank()
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 14),
+  axis.title.x = element_text(size = 14),
+  legend.title = element_text(size = 14),
+  legend.text = element_text(size = 12),
+  plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  legend.position = "right",
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
+  panel.grid.minor = element_blank()
   )
 
-# Mostrar los gráficos
+# Show the plots
 print(p_hma)
 print(p_others)
 
@@ -652,12 +651,12 @@ bacterias=c(
 case_when_expression <- paste0(
   "case_when(",
   paste(
-    sprintf("str_detect(name, '%s') ~ '%s'", bacterias, bacterias),
-    collapse = ", "
+  sprintf("str_detect(name, '%s') ~ '%s'", bacterias, bacterias),
+  collapse = ", "
   ),
   ", TRUE ~ NA_character_)"
 )
-# Paso 3: Unir `conq_long` con `metadata` por la columna 'sample'
+# Step 3: Join `conq_long` with `metadata` by the 'sample' column
 
 two<-conq_long_sep %>%
   mutate(source = "Sylph+ConQuR") %>% 
@@ -671,123 +670,111 @@ final_df <- two %>%
   rename(sample=sample_id) %>% 
   rename(directly_reads=conteo) %>% 
   mutate(fraction =directly_reads/total*100) %>% 
-    select(-c("total","sample_conqur")) %>% 
+  select(-c("total","sample_conqur")) %>% 
   bind_rows(combined_dfk %>% mutate(source = "Kraken+Bracken")) %>% 
   filter(str_detect(name, paste(bacterias, collapse = "|"))) %>% 
   mutate(species = eval(parse(text = case_when_expression)))
 
-# Convertir 'fraction' a numérico y 'date' a formato fecha
+# Convert 'fraction' to numeric and 'date' to date format
 combined_df2 <- final_df %>%
   mutate(
-    fraction = as.numeric(fraction),
-    date = dmy(date))
-# Crear la columna 'group' basada en 'place' (como antes)
+  fraction = as.numeric(fraction),
+  date = dmy(date))
+# Create the 'group' column based on 'place' (as before)
 combined_df2 <- combined_df2 %>%
   mutate(group = case_when(
-    sample =="Mock Community" ~"Mock Community",
-    str_detect(sample, "Negative Control") ~ "Negative Control",
-    place == "INSN" ~ "INSN",
-    place == "HMA" ~ "HMA",
-    TRUE ~ "HCH"  # Asigna "HCH" si no es ni "INSN" ni "HMA"
+  sample =="Mock Community" ~"Mock Community",
+  str_detect(sample, "Negative Control") ~ "Negative Control",
+  place == "INSN" ~ "INSN",
+  place == "HMA" ~ "HMA",
+  TRUE ~ "HCH"  # Assigns "HCH" if it is neither "INSN" nor "HMA"
   )) %>% filter(group %in% c("Mock Community")) %>% 
   filter(!str_detect(name, "Escherichia coli 1.2741 Contig1651129016"))
 
-# Ordenar 'identifier' por 'group', 'date' y 'number_from_id'
+# Sort 'identifier' by 'group', 'date', and 'number_from_id'
 combined_df2 <- combined_df2 %>%
   arrange(
-    source,
-    factor(group, levels = c("Mock Community", "Negative Control")),
-    
+  source,
+  factor(group, levels = c("Mock Community", "Negative Control")),
+  
   ) %>% 
   mutate(species = str_replace_all(species, " ", "\n"))
 
-# Calcular 'mean_fraction' y 'mean_directly_reads' por 'identifier' y 'group'
+# Calculate 'mean_fraction' and 'mean_directly_reads' by 'identifier' and 'group'
 mean_fraction_df2 <- combined_df2 %>%
   group_by(species, group, source) %>%
   summarise(
-    mean_fraction = median(fraction),
-    mean_directly_reads = median(directly_reads),
-    .groups = 'drop'
+  mean_fraction = median(fraction),
+  mean_directly_reads = median(directly_reads),
+  .groups = 'drop'
   ) %>%
   arrange(desc(mean_fraction)) %>%
   mutate(species = factor(species, levels = unique(species)))
 
-# Ordena 'species' en 'combined_df2' basado en el orden de 'mean_fraction_df2'
+# Order 'species' in 'combined_df2' based on the order of 'mean_fraction_df2'
 combined_df2 <- combined_df2 %>%
   mutate(species = factor(species, levels = levels(mean_fraction_df2$species)))
 
 
-palette_colors <- brewer.pal(n = 9, name = "Set1")  # Puedes ajustar `n` al número de grupos que tengas
+palette_colors <- brewer.pal(n = 9, name = "Set1")  # You can adjust `n` to the number of groups you have
 
-# Crear el gráfico mejorado para publicación
+# Create the improved plot for publication
 p_mock <- ggplot() +
   geom_bar(
-    data = mean_fraction_df2,
-    aes(x = species, y = mean_fraction, fill = species),
-    stat = "identity",
-    width = 0.6,
-    show.legend = FALSE
+  data = mean_fraction_df2,
+  aes(x = species, y = mean_fraction, fill = species),
+  stat = "identity",
+  width = 0.6,
+  show.legend = FALSE
   ) +
   geom_text(
-    data = mean_fraction_df2,
-    aes(
-      x = species,
-      y = mean_fraction,
-      label = paste0("n = ", round(mean_directly_reads))
-    ),
-    hjust=0.5,  # Mueve ligeramente a la izquierda
-    vjust=-0.5,
-    size = 2.8,  # Tamaño de texto mayor para visibilidad
-    color = "black"
+  data = mean_fraction_df2,
+  aes(
+    x = species,
+    y = mean_fraction,
+    label = paste0("n = ", round(mean_directly_reads))
+  ),
+  hjust=0.5,  # Move slightly to the left
+  vjust=-0.5,
+  size = 2.8,  # Larger text size for visibility
+  color = "black"
   ) +
   geom_point(
-    data = combined_df2,
-    aes(x = species, y = fraction),
-    color = "black",
-    size = 1.8,
-    shape=16,
-    alpha=0.6,# Aumenta el tamaño de los puntos para mayor visibilidad
-    position = position_jitter(width = 0.1, height = 0)
+  data = combined_df2,
+  aes(x = species, y = fraction),
+  color = "black",
+  size = 1.8,
+  shape=16,
+  alpha=0.6,# Increase the size of the points for better visibility
+  position = position_jitter(width = 0.1, height = 0)
   ) +
   geom_hline(yintercept = 12, color = "red", size = 0.8, alpha=0.7)+
-  facet_wrap(~source) +  # Facetas en una columna para mayor clarida   
+  facet_wrap(~source) +  # Facets in one column for clarity   
   scale_fill_manual(
-    values = palette_colors,
-    name = "Group"
+  values = palette_colors,
+  name = "Group"
   )+
-  theme_minimal(base_size = 16) +  # Tamaño base más grande
+  theme_minimal(base_size = 16) +  # Larger base size
   labs(
-    title = "Percentage of Reads from Mock Community Species",
-    x = "Species",
-    y = "Read Percentage"
+  title = "Percentage of Reads from Mock Community Species",
+  x = "Species",
+  y = "Read Percentage"
   ) +
   theme(
-    axis.text.y = element_text(size = 10),
-    axis.title.y = element_text(size = 12, face = "bold"),
-    axis.title.x = element_text(size = 12, face = "bold"),
-    axis.text.x = element_text(size = 10, face = "italic", angle = 45, hjust = 1),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    legend.title = element_text(size = 14, face = "bold"),
-    legend.text = element_text(size = 12),
-    panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
-    panel.grid.minor = element_blank(),
-    legend.position = "right"
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 12, face = "bold"),
+  axis.title.x = element_text(size = 12, face = "bold"),
+  axis.text.x = element_text(size = 10, face = "italic", angle = 45, hjust = 1),
+  plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  legend.title = element_text(size = 14, face = "bold"),
+  legend.text = element_text(size = 12),
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray90"),
+  panel.grid.minor = element_blank(),
+  legend.position = "right"
   ) +
-  coord_cartesian(ylim = c(0, 18)) # Asegura que el límite del eje Y esté ajustado al máximo de tus datos
+  coord_cartesian(ylim = c(0, 18)) 
 
-# Imprime el gráfico
-print(p_mock)
-
-```
-
-
-
-
-```{r}
-
+p_mock
 
 ```
-
-
-
 

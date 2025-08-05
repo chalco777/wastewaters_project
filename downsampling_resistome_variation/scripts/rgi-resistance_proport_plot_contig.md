@@ -1,17 +1,35 @@
 
-
 ## What is this notebook about?
-In this notebook I analyze RGI summary and read count files at multiple downsampling depths for *Acinetobacter baumannii* (and I did it with other pathogens too), clean and unify them, compute per-identifier resistant gene counts, merge with total reads to derive percent resistant reads, filter out low-quality combinations, and map barcodes to hospital labels.
-I apply a bootstrap routine to estimate medians and 95% confidence intervals of resistant proportions by downsampling level and identifier, aggregate counts for some relevant genes such as OXA-441 and also for all resistance genes, and produce summary tables of resistant fraction.
-I visualize these results with line plots showing median trends over downsampling (GB), overlay bootstrap confidence ribbons and jittered replicate points, and distinguish hospitals using custom colors and shapes in separate plots for the single gene and the combined resistance profile.
+
+In this notebook I estimate, across multiple downsampling (DS) depths, the **fraction of reads that map to AMR-labeled regions, specifically carbapenem-resistance gene (CRE) regions, and are themselves classified as carrying these ARGs**. Focusing on *Acinetobacter baumannii* (and extended to other pathogens), I:
+
+* clean and unify the input summaries,
+* compute per-AMR-region counts of reads classified as AMR,
+* merge those with the total reads mapped to AMR regions to derive the percent of truly AMR reads,
+*filter low-quality combinations, and
+* map barcodes to their original hospital labels.
+
+I then performed a bootstrap routine to obtain medians and 95% confidence intervals of the resistant proportion by downsampling level and identifier, aggregate results for relevant genes (e.g., OXA-441) as well as all the antibiotic resistance genes, and produce tables and figures of the resistant fraction. Plots show median trends vs. downsampling (GB), with bootstrap ribbons, jittered replicates, and hospital-specific colors/shapes—both for single genes and the combined AMR profile.
 
 ## Understanding the notebook
-Input: RGI summary and read count files for *Acinetobacter baumannii* at various downsampling levels, stored in rgi_concatenate and rgi_count_all_reads directories, respectively.
-Output: See `plots` directory for the generated plots.
+Input.
+* RGI summaries run on **ONT reads** (not contigs), which label per-read ORFs/regions with AMR calls.
+* Read-count files with the **number of reads that map to those AMR-labeled regions** (same identifiers), provided at several downsampling levels for A. baumannii and other pathogens. Files reside under rgi_concatenate (summaries) and rgi_count_all_reads (counts).
+
+Output.
+* See the `plots/` directory for generated figures and the summary tables of resistant fractions.
+
+### Terminology (for clarity).
+* AMR-mapped reads: reads that align to regions labeled as AMR by RGI.
+* Truly AMR reads: among AMR-mapped reads, those that RGI classifies as AMR by themselves.
+* Identifier: the per-region label (derived from the ONT read and ORF) used to join summaries and counts.
+
 
 ## Credits
 The plot `downsampling_resistome_variation/plots/proportion_resistant_baumannii.png` and part of this script 
 was generated together with [Diego Taquiri](https://github.com/diego-taquiri).
+
+## Load libraries
 
 ```{r load libraries}
 library(tidyverse)
@@ -24,7 +42,7 @@ library(boot)
 
 ```
 
-Base functions:
+## Define Base functions:
 
 ```{r functions}
 # Define a function to calculate variance, required by the boot function
@@ -58,7 +76,7 @@ median_cl_boot <- function(x, conf = 0.95) {
 }
 ```
 
-Define themes and color schemes
+## Define themes and color schemes
 ```{r color scheme}
 # Define the color scheme 
 color_scheme <- c("Phenol"="#CAB2D6",
@@ -89,7 +107,10 @@ my_theme2 <- theme(
 
 ```
 
-Read all the RGI from DS and fasta counts
+## Read the RGI results on AMR-mapped reads for each DS, and then the number of AMR-mapped reads for each Pathogen and DS
+
+As expected, from these files I will get the proportion of trully carbapenem-resistant reads
+
 ```{r}
 # Define the vector of downsampling sizes and file paths
 downsampling_sizes <- c("03", "05", "1", "3", "6", "9")
@@ -120,7 +141,7 @@ list2env(setNames(DS_reads_list, paste0("DS_", downsampling_sizes)), .GlobalEnv)
 list2env(setNames(DS_counts_list, paste0("DS_", downsampling_sizes, "_count")), .GlobalEnv)
 ```
 
-Unify all the tables of resistance
+## Unify all the tables of trully AMR genes (RGI output on reads)
 ```{r}
 all_downsamp <- bind_rows(DS_03, DS_05, DS_1, DS_3, DS_6, DS_9) %>%
   mutate(barcode_name=case_when(
@@ -131,7 +152,7 @@ all_downsamp <- bind_rows(DS_03, DS_05, DS_1, DS_3, DS_6, DS_9) %>%
   )) 
 ```
 
-Get the count of resistance genes per downsampling
+## Get the count of resistant reads per gene from the RGI output
 ```{r}
 # Create my list with the names of the data frames
 ds_names <- c("DS_03", "DS_05", "DS_1", "DS_3", "DS_6", "DS_9")
@@ -152,11 +173,11 @@ all_downsamp_table <- all_downsamp %>%
   ungroup()
 
 ```
-Unify the counts of reads
+## Unify the counts of total mapped-reads to carbapenem resistant regions
 ```{r}
 all_downsamp_count <- bind_rows(DS_03_count, DS_05_count, DS_1_count, DS_3_count, DS_6_count, DS_9_count)
 ```
-Find the proportion of resistant reads and filter insufficient data in DSs
+## Find the proportion of trully resistant reads and filter insufficient data in downsamplings (DSs)
 ```{r}
 all_DS_proportion <- all_downsamp_table %>% 
   left_join(all_downsamp_count,by=c("downsamplingGB","identifier")) %>% 
@@ -186,7 +207,7 @@ str(all_DS_proportion)
 
 ```
 
-Make the graphs for each relevant CRE gene, changing the name of the gene in `filter(gene == "OXA-441")`
+## Make the graphs for each relevant CRE gene, changing the name of the gene in `filter(gene == "OXA-441")`
 
 ```{r}
 
@@ -231,7 +252,7 @@ p<-ggplot(oxa253_data, aes(x = downsamplingGB, y = mean_proportion)) +
          fill = guide_legend(title = "Hospital"))
 ```
 
-Make the graph for all genes
+## Make the graph for the proportion of resistant reads across all carbapenem-resistant genes
 ```{r}
 
 all_resistance <- all_DS_proportion %>% group_by(downsamplingGB, identifier, barcode_name) %>% summarise(mean_proportion=mean(porportion))

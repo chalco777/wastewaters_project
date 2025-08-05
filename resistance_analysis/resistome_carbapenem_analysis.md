@@ -12,6 +12,8 @@ Other analysis include a batch-colored PCoA and an exploratory category-level PC
 I built the CPM matrix, ran the ordination, curated palettes/labels for interpretability, generated the top-genes table, and added batch and category analyses.
 I also included a raw ConQuR pass to illustrate batch-effect correction on the carbapenem gene table.
 
+## Import libraries as usually
+
 ```{r}
 library(tidyverse)
 library(vegan)
@@ -27,7 +29,8 @@ l_data<-read_tsv("count_L_1405DS.tsv")
 t_data<-read_tsv("count_wastewatersch_5.2DS.tsv")
 last<-read_tsv("count_LIG_P2_3.8DS.tsv")
 ```
-PREPARAR METADATA
+
+## PREPARE METADATA
 
 ```{r}
 met_temp <- data.frame(
@@ -36,26 +39,26 @@ met_temp <- data.frame(
                              "AR072_2", "AR072_3", "Mock Community", "Negative control - Human DNA"),
   barcode = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 )
-# Convertir la columna Barcode en el formato barcodeXX
+# Convert the Barcode column to barcodeXX format
 met_temp$barcode <- sprintf("barcode%02d", met_temp$barcode)
 
-# Mostrar el data frame resultante
+# Show the resulting data frame
 print(met_temp)
 
-# Crear el segundo data frame con los nuevos datos
+# Create the second data frame with the new data
 additional_data <- data.frame(
   sample = c("AR071_1", "AR071_2", "AR071_3", 
                              "AR072_1", "AR072_2", "AR072_3"),
-  place = rep("HMA", 6),  # Columna 'HMA' con valor constante
+  place = rep("HMA", 6),  # 'HMA' column with constant value
   date = c("13/02/2024", "13/02/2024", "13/02/2024", 
              "20/02/2024", "20/02/2024", "20/02/2024")
 )
 
-# Unir ambos data frames por la columna 'sample_of_extraction'
+# Merge both data frames by the 'sample_of_extraction' column
 temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
 
 
-# Crear el tercer data frame con los datos del 2do intento
+# Create the third data frame with the 2nd attempt data
  el_met<- data.frame(
   sample = c("AR086", "AR093","AR093","AR093", "AR095", 
                              "Mock Community", "Negative control - Human DNA"),
@@ -64,7 +67,7 @@ temp_met <- merge(met_temp, additional_data, by = "sample", all.x = TRUE)
   `barcode` = c(24, 23, 22, 21, 20, 19, 18)
 )
 
-# Convertir la columna Barcode al formato barcodeXX en el segundo intento
+# Convert the Barcode column to barcodeXX format in the second attempt
 el_met$barcode <- sprintf("barcode%02d", el_met$barcode)
 
 mw_met <- data.frame(
@@ -75,7 +78,7 @@ mw_met <- data.frame(
   barcode = c(1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13)
 )
 
-# Añadir las columnas 'HMA' y 'Date' con valores específicos
+# Add the 'HMA' and 'Date' columns with specific values
 mw_met$place <- "HMA"
 mw_met$date <- "06/02/2024"
 mw_met$barcode <- sprintf("barcode%02d", mw_met$barcode)
@@ -108,7 +111,8 @@ metadata<-bind_rows(metadata,last_temp) %>%
   filter(!str_detect(sample_id, "Negative"))
 ```
 
-##PREPARAR CONTEOS
+## PREPARE COUNTS
+
 ```{r}
 mw_data <- mw_data %>%
   mutate(
@@ -135,9 +139,11 @@ all_filtered2<-all_filtered %>%
   filter(Drug_Class=="carbapenem") %>% 
   group_by(sample,Gen) %>% summarize(conteo=sum(Conteo))
 ```
-HALLAR CPM
+
+## FIND CPM AND CREATE THE PCOA
+
 ```{r}
-###AÑADIENDO CONTEOS TOTALES PARA HALLAR CPM
+###ADDING TOTAL COUNTS TO FIND CPM
 #last_seq_total<-read_tsv("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance/countreads_17sset.tsv.tsv", col_names = c("sample","total"))%>% mutate(sample = paste0(sample,"_DS_3.8GB"))
 
 last_seqDS<-read.table("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance/countreadsDS_17sset.tsv.tsv", col.names = c("sample","total"), sep= " ")%>% mutate(sample = gsub(".fastq.gz.*$","", sample)) %>% 
@@ -149,8 +155,8 @@ temporalDS<-read.table("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abu
 mw_total<-read_tsv("C:/Users/DAVID 21/OneDrive/Documentos/Mirkoslab/loui/abundance/countreads_mw.tsv.tsv", col_names = c("sample","total")) 
 
 
-cpm_norm<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Suma total de conteos por muestra
-    cpm = (conteo / total) * 1e6  # Cálculo de CPM
+cpm_norm<-bind_rows(mw_total, temporalDS, last_seqDS) %>% inner_join(all_filtered2,by = "sample") %>% mutate(  # Total sum of counts per sample
+    cpm = (conteo / total) * 1e6  # CPM calculation
   ) %>%
   select(-c(total,conteo)
 )
@@ -159,33 +165,33 @@ cpm_matrix<-cpm_norm %>% pivot_wider(names_from = Gen, values_from = cpm, values
   as.matrix()
 log_cpm_matrix<-log2(cpm_matrix+1)
 #sqr_cpm_matrix<-sqrt(cpm_matrix)
-# Calcula la distancia de Bray-Curtis
+# Calculate Bray-Curtis distance
 #bray_dist <- vegdist(cpm_matrix, method = "bray")
 bray_dist <- vegdist(log_cpm_matrix, method = "bray")
 
-# Realiza el PCoA
+# Perform PCoA
 pcoa <- cmdscale(bray_dist, eig = TRUE, k = 2, add=TRUE)
-positions <- pcoa$points #extraigo los vectores
-colnames(positions) <- c("pcoa1", "pcoa2") #doy nombres a las coordinates
-positions<-positions[order(rownames(positions)), ] #ordeno por nombre de fila
-#hallo porcentaje explicado
+positions <- pcoa$points #extract the vectors
+colnames(positions) <- c("pcoa1", "pcoa2") #assign names to coordinates
+positions<-positions[order(rownames(positions)), ] #order by row name
+#find explained percentage
 expl<-(pcoa$eig / sum(pcoa$eig))*100
 exp<-format(round(expl[1:2],digits=1),nsmall=1, trim=TRUE)
 labs<-c(glue("PCo 1 ({exp[1]}%)"),
         glue("PCo 2 ({exp[2]}%)"))
-# Convierto los resultados ordenados de PCoA a tibble y uno con df_variable
-# Gráfico PCoA con mejoras y etiquetas de muestras
+# Convert the ordered PCoA results to tibble and join with df_variable
+# Improved PCoA plot with sample labels
 palette_colors <- c(
-  "HMA_baseline"   = "#2171B5",  # Azul más oscuro
-  "HMA_1_week"     = "#4292C6",  # Azul intermedio
-  "HMA_2_weeks"    = "#6BAED6",  # Azul más claro
-  "HMA_5_weeks"    = "#9ECAE1",  # Azul aún más claro
+  "HMA_baseline"   = "#2171B5",  # Darker blue
+  "HMA_1_week"     = "#4292C6",  # Medium blue
+  "HMA_2_weeks"    = "#6BAED6",  # Lighter blue
+  "HMA_5_weeks"    = "#9ECAE1",  # Even lighter blue
   "HMA_3_months"   = "#2131B5",  
   "INSN-I"           = "#74C476",
   "INSN-II" = "#A1D99B",
-    "HCH"            = "#6A51A3",  # Púrpura oscuro
-  "Mock Community" = "#F16913",  # Naranja medio
-  "Negative control" = "#CB181D" # Rojo oscuro
+    "HCH"            = "#6A51A3",  # Dark purple
+  "Mock Community" = "#F16913",  # Medium orange
+  "Negative control" = "#CB181D" # Dark red
 )
 
 pc<-positions %>%
@@ -209,11 +215,11 @@ pc<-positions %>%
       TRUE ~ place
     )) 
 
-# Crear un vector de niveles de 'identifier' ordenados por fecha
+# Create a vector of 'identifier' levels ordered by date
 ordered_levels <- pc %>%
   select(identifier, date, place) %>%
   distinct() %>%
-  mutate(place = factor(place, levels = c("HMA", "INSN", "HCH","Mock Community", "Negative Control"))) %>% # Orden específico de 'place'
+  mutate(place = factor(place, levels = c("HMA", "INSN", "HCH","Mock Community", "Negative Control"))) %>% # Specific order of 'place'
   arrange(place, date) %>%
   pull(identifier)
 ordered_levels <- unique(ordered_levels)
@@ -224,7 +230,7 @@ gg<-pc%>%ggplot(aes(x = pcoa1, y = pcoa2, color = identifier)) +
   geom_point(size = 3, show.legend = TRUE)+
   #stat_ellipse(aes(fill = identifier), geom = "polygon", alpha = 0.2, level = 0.95, show.legend = FALSE)+
   #stat_ellipse(aes(fill = identifier), geom="polygon",alpha=0.2, show.legend = FALSE)+
-  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Coloca geom_point sin size en aes()
+  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Place geom_point without size in aes()
   # geom_text_repel(aes(label = identifier), size = 3, max.overlaps = 2, force=2)+#tras
   labs(color = "Sample", x = labs[1], y = labs[2]) +  
   theme_minimal(base_size = 16) +  
@@ -244,7 +250,9 @@ guides(fill = "none")+
 #+ xlim(c(-0.105, -0.095))
 
 ```
-GENES QUE CONTRIBUYEN
+
+## Which genes contribute to the variation on our PCoA axes?
+
 ```{r}
 library(broom)
 
@@ -276,13 +284,13 @@ cor_results <- map_dfr(genes, function(gene) {
 cor_results <- cor_results %>%
   mutate(Adjusted_P_value = p.adjust(P_value, method = "BH"))
 
-# Seleccionar los 10 genes principales con mayor correlación absoluta con PCo1
+# Select the top 10 genes with the highest absolute correlation with PCo1
 top_genes <- cor_results %>%
   arrange(desc(abs(Correlation))) %>%
   slice(1:10)
 library(ggpubr)
 
-# Formatear la tabla para publicación
+# Format the table for publication
 top_genes_formatted <- top_genes %>%
   mutate(
     Correlation = round(Correlation, 3),
@@ -293,7 +301,7 @@ top_genes_formatted <- top_genes %>%
 # Display the top 10 genes in a beautiful table
 library(knitr)
 library(kableExtra)
-# Guardar la tabla como HTML
+# Save the table as HTML
 save_kable(
   kable(top_genes_formatted, align = "lccc", caption = "Top 10 Genes Influencing PCo2 in Carbapenem Genes PCoA (log2)") %>%
     kable_styling(full_width = FALSE, font_size = 12),
@@ -303,11 +311,12 @@ save_kable(
 
 ```
 
-BATCH
+## Let's hope there is no grouping by BATCH
+
 ```{r}
 pc_batch<-pc %>% ggplot(aes(x = pcoa1, y = pcoa2, color = folder)) +
   geom_point(size = 3, show.legend = TRUE)+
-  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Coloca geom_point sin size en aes()
+  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Place geom_point without size in aes()
   # geom_text_repel(aes(label = identifier), size = 3, max.overlaps = 2, force=2)+#tras
   labs(color = "Batch", x = labs[1], y = labs[2]) +  
   theme_minimal(base_size = 16) +  
@@ -322,15 +331,15 @@ pc_batch<-pc %>% ggplot(aes(x = pcoa1, y = pcoa2, color = folder)) +
   ggtitle("PCoA of Carbapenem Genes by Batch")
 ```
 
-CATEGORÍAS
+## Now we will build a PCoA from CATEGORIES of Antibiotic Resistance Genes
 
 ```{r}
 cat_all_filtered2<-all_filtered %>% 
   #filter(Drug_Class=="carbapenem") %>% 
   group_by(sample,Drug_Class) %>% summarize(conteo=sum(Conteo))
 
-cat_cpm_norm<-bind_rows(mw_total, temporal_total, last_seq_total) %>% inner_join(cat_all_filtered2,by = "sample") %>% mutate(  # Suma total de conteos por muestra
-    cpm = (conteo / total) * 1e6  # Cálculo de CPM
+cat_cpm_norm<-bind_rows(mw_total, temporal_total, last_seq_total) %>% inner_join(cat_all_filtered2,by = "sample") %>% mutate(  # Total sum of counts per sample
+    cpm = (conteo / total) * 1e6  # CPM calculation
   ) %>%
   select(-c(total,conteo)
 )
@@ -338,24 +347,24 @@ cat_cpm_matrix<-cat_cpm_norm %>% pivot_wider(names_from = Drug_Class, values_fro
   column_to_rownames("sample") %>%
   as.matrix()
 
-# Calcula la distancia de Bray-Curtis
+# Calculate Bray-Curtis distance
 bray_dist <- vegdist(cat_cpm_matrix, method = "bray")
 
-# Realiza el PCoA
+# Perform PCoA
 pcoa <- cmdscale(bray_dist, eig = TRUE, k = 2, add=TRUE)
 
 
-positions <- pcoa$points #extraigo los vectores
-colnames(positions) <- c("pcoa1", "pcoa2") #doy nombres a las coordinates
-positions<-positions[order(rownames(positions)), ] #ordeno por nombre de fila
+positions <- pcoa$points #extract the vectors
+colnames(positions) <- c("pcoa1", "pcoa2") #assign names to coordinates
+positions<-positions[order(rownames(positions)), ] #order by row name
 
-#hallo porcentaje explicado
+#find explained percentage
 expl<-(pcoa$eig / sum(pcoa$eig))*100
 exp<-format(round(expl[1:2],digits=1),nsmall=1, trim=TRUE)
 labs<-c(glue("PCo 1 ({exp[1]}%)"),
         glue("PCo 2 ({exp[2]}%)"))
          
-# Convierto los resultados ordenados de PCoA a tibble y uno con df_variable
+# Convert the ordered PCoA results to tibble and join with df_variable
 pc<-positions %>%
   as_tibble(rownames = "sample") %>%
   inner_join(metadata, by = "sample") %>% 
@@ -379,7 +388,7 @@ pc<-positions %>%
   geom_point(size = 2.5, show.legend = TRUE)+
   #stat_ellipse(aes(fill = identifier), geom = "polygon", alpha = 0.2, level = 0.95, show.legend = FALSE)+
   #stat_ellipse(aes(fill = identifier), geom="polygon",alpha=0.2, show.legend = FALSE)+
-  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Coloca geom_point sin size en aes()
+  #geom_jitter(size = 2.5, stroke = 0.8,width = 0.005, height = 0.005) +  # Place geom_point without size in aes()
   # geom_text_repel(aes(label = identifier), size = 3, max.overlaps = 2, force=2)+#tras
   labs(color = "Sample", x = labs[1], y = labs[2]) +  
   theme_minimal(base_size = 16) +  
@@ -397,7 +406,9 @@ guides(fill = "none") +
 
 
 ```
-Top categories influenciing PCOA
+
+## Which are the top categories influencing this PCOA?
+
 ```{r}
 
 # Extract PCo1 scores and convert to a dataframe
@@ -411,7 +422,7 @@ cpm_df <- as.data.frame(cat_cpm_matrix) %>%
 # Merge PCo1 scores with CPM data
 merged_df <- left_join(positions_df, cpm_df, by = "sample")
 
-# Calcular la correlación de Spearman con los datos transformados
+# Calculate the Spearman correlation with the transformed data
 cor_results <- map_dfr(genes, function(gene) {
   cor_test <- cor.test(merged_df[[gene]], merged_df_transformed$pcoa1, method = "kendall")
   tibble(
@@ -425,13 +436,13 @@ cor_results <- map_dfr(genes, function(gene) {
 cor_results <- cor_results %>%
   mutate(Adjusted_P_value = p.adjust(P_value, method = "BH"))
 
-# Seleccionar los 10 genes principales con mayor correlación absoluta con PCo1
+# Select the top 10 genes with the highest absolute correlation with PCo1
 top_genes <- cor_results %>%
   arrange(desc(abs(Correlation))) %>%
   slice(1:10)
 library(ggpubr)
 
-# Formatear la tabla para publicación
+# Format the table for publication
 top_genes_formatted <- top_genes %>%
   mutate(
     Correlation = round(Correlation, 3),
@@ -442,7 +453,7 @@ top_genes_formatted <- top_genes %>%
 # Display the top 10 genes in a beautiful table
 library(knitr)
 library(kableExtra)
-# Guardar la tabla como HTML
+# Save the table as HTML
 save_kable(
   kable(top_genes_formatted, align = "lccc", caption = "Top 10 Categories Influencing PCo1 in Categories PCoA") %>%
     kable_styling(full_width = FALSE, font_size = 12),
@@ -451,8 +462,8 @@ save_kable(
 #ggsave("top_genes_table.png", tabla_gg, width = 8, height = 4, dpi = 700)
 ```
 
+## USING RAW CONQUR
 
-USING CONQUR CRUDO
 ```{r}
 metadata<-metadata %>% 
     filter(!is.na(place)) %>%
@@ -470,22 +481,22 @@ taxa = as.matrix(my_sample_data2[, -(1:4)] )
 batchid = my_sample_data2[, 'folder']
 summary(batchid)
 
-# Extraer el vector de batchids
+# Extract the batchids vector
 batchid_vector <- batchid$folder
 
-# Crear una matriz lógica que indique la presencia de cada taxón (conteo mayor a cero)
+# Create a logical matrix indicating the presence of each taxon (count greater than zero)
 present_matrix <- taxa > 0
 
-# Calcular el número de batchids únicos en los que está presente cada taxón
+# Calculate the number of unique batchids in which each taxon is present
 num_batchids_per_taxon <- apply(present_matrix, 2, function(present_vec) {
   batchids_present <- batchid_vector[present_vec]
   length(unique(batchids_present))
 })
 
-# Seleccionar los taxones que están presentes en al menos dos batchids
+# Select taxa that are present in at least two batchids
 taxa_selected <- taxa[, num_batchids_per_taxon >= 2]
 
-# Opcional: Verificar cuántos taxones cumplen la condición
+# Let's see how many taxa meet the condition
 length(num_batchids_per_taxon[num_batchids_per_taxon >= 2])
 rownames(taxa_selected)<-x
 rownames(covar)<-x
@@ -521,3 +532,6 @@ taxa_corrected_raw1=ConQuR(
 
 
 
+
+
+ 
