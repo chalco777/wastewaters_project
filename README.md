@@ -4,8 +4,7 @@ This repository hosts scripts and notebooks for processing wastewater metagenomi
 
 ## Analytical Notebooks
 
-> [!WARNING]
-> **IMPORTANT:** Refer to each folder for the figures and the Markdown document with detailed descriptions of the statistical analyses and the procedures implemented.
+> ⚠️ **IMPORTANT:** **Refer to each folder for the figures and the Markdown document with detailed descriptions** of the statistical analyses and the procedures implemented.
 
 - **downsampling_resistome_variation/scripts/rgi-resistance_proport_plot_contig.md**  
     Calculates the fraction of reads mapping to carbapenem‑resistance regions that are themselves classified as AMR across several downsampling levels.  
