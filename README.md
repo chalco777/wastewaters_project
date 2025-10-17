@@ -6,7 +6,8 @@ This repository hosts scripts and notebooks for processing metagenomic data from
 
 > ⚠️ **IMPORTANT:** **Refer to each folder for all the figures and the Markdown document with detailed descriptions** of the statistical analyses and the procedures implemented.
 
-- ### **pathogen_abundance/exploratory_pathogen_analysis.md**  
+- ### [`pathogen_abundance/exploratory_pathogen_analysis.md`](pathogen_abundance/exploratory_pathogen_analysis.md)
+
     Exploratory plots of pathogen read percentages per hospital, comparing Sylph, ConQuR, and Kraken methods.  
     Includes mock‑community validation and per‑hospital comparisons, with all output images saved in `exploratory_pathogen_analysis/`.
 
@@ -14,7 +15,7 @@ This repository hosts scripts and notebooks for processing metagenomic data from
 
     ![ggg4](pathogen_abundance/exploratory_pathogen_analysis/percentage_klebsiella_reads.png)
 
-- ### **pathogen_abundance/pathogen_timeseries_multi.md**  
+- ### [`pathogen_abundance/pathogen_timeseries_multi.md`](pathogen_abundance/pathogen_timeseries_multi.md)  
     Harmonizes metadata and Sylph outputs from multiple sequencing runs (`MW`, `temporal`, `17_set`, `seq2111`, `seq1212`).  
     Computes species‑level relative abundance, draws temporal facets with median ± IQR, evaluates library size, adds clinical‑event markers, and produces correlation plots between abundance or assigned reads versus total reads.
 
@@ -22,13 +23,13 @@ This repository hosts scripts and notebooks for processing metagenomic data from
 
     ![g6](pathogen_abundance/pathogen_timeseries_multi/correlation_abundancevstotalreads.png)    
 
-- ### **resistance_analysis/pathogen_resistance.md**  
+- ### [`resistance_analysis/pathogen_resistance.md`](resistance_analysis/pathogen_resistance.md)  
     Builds a resistome ordination for a chosen pathogen (default *Acinetobacter baumannii*, but also performed on *Escherichia coli* and *Klebsiella pneumoniae*).  
     Merges per‑run resistance counts, normalizes to CPM, performs Bray–Curtis PCoA, colors samples by site/batch/date, and lists [`top genes correlated`](https://chalco777.github.io/wastewaters_project/resistance_analysis/pathogen_resistance/top_genes_Acinetobacter_baumanniipcoa.html) with the primary axis.
 
     ![g7](resistance_analysis/pathogen_resistance/pcoa_resistance_profile_baumannii.png)
 
-- **resistance_analysis/resistance_abundance.md**  
+- ### [`resistance_analysis/resistance_abundance.md`](resistance_analysis/resistance_abundance.md)  
     Joins resistance‑gene counts with total read counts and metadata.  
     Generates carbapenem‑gene barplots by site, expands to six antibiotic classes for temporal trend lines, and overlays a histogram of clinical resistance events.
 
@@ -36,15 +37,16 @@ This repository hosts scripts and notebooks for processing metagenomic data from
 
     ![g8](resistance_analysis/resistance_abundance/temporal_variation_resistance+clinical.png)
 
-- **resistance_analysis/resistome_carbapenem_analysis.md**  
-    Integrates multiple sequencing runs to assemble a carbapenem‑gene CPM matrix, performs PCoA, ranks genes by [correlation with axes](resistance_analysis/carbapenem_resistance/top_genes_table_carbapenemgenespcoa.html), examines *batch effects*, and illustrates a ConQuR batch‑correction pass.
+- ### [`resistance_analysis/resistome_carbapenem_analysis.md`](resistance_analysis/resistome_carbapenem_analysis.md)  
+    Integrates multiple sequencing runs to assemble a carbapenem‑gene CPM matrix, performs PCoA, ranks genes by [correlation with axes](https://chalco777.github.io/wastewaters_project/resistance_analysis/carbapenem_resistance/top_genes_table_carbapenemgenespcoa.html), examines *batch effects*, and illustrates a ConQuR batch‑correction pass.
 
     ![g9](resistance_analysis/carbapenem_resistance/pcoa_carbapenem_genes.png)
 
     ![g10](resistance_analysis/carbapenem_resistance/pcoa_carbapenem_genes_by_batch.png)
     
 
-- **downsampling_resistome_variation/scripts/rgi-resistance_proport_plot_contig.md**  
+- ### [`downsampling_resistome_variation/scripts/rgi-resistance_proport_plot_contig.md`](downsampling_resistome_variation/scripts/rgi-resistance_proport_plot_contig.md)
+  
     Calculates the fraction of reads mapping to carbapenem‑resistance (CRE) regions that are themselves classified as AMR across several downsampling levels.  
     Cleans and joins RGI read summaries with per‑region read counts, filters low‑coverage cases, bootstrap‑estimates median resistant proportions and 95 % CIs, and plots per‑gene and overall trends.
 
