@@ -4,10 +4,6 @@ output: html_document
 date: "2024-10-04"
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## What is this document about?
 
 Performs exploratory analysis for abundance metagenomic data variation accross time and sampling sites.

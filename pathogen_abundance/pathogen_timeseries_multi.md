@@ -1,4 +1,3 @@
-#!/usr/bin/env Rscript
 ---
 title: "pathogen_abundance"
 author: "Adrián Chalco"
