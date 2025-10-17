@@ -4,27 +4,29 @@ This repository hosts scripts and notebooks for processing metagenomic data from
 
 ## Analytical Notebooks
 
-> ⚠️ **IMPORTANT:** **Refer to each folder for the figures and the Markdown document with detailed descriptions** of the statistical analyses and the procedures implemented.
+> ⚠️ **IMPORTANT:** **Refer to each folder for all the figures and the Markdown document with detailed descriptions** of the statistical analyses and the procedures implemented.
 
-- **pathogen_abundance/exploratory_pathogen_analysis.md**  
+- ### **pathogen_abundance/exploratory_pathogen_analysis.md**  
     Exploratory plots of pathogen read percentages per hospital, comparing Sylph, ConQuR, and Kraken methods.  
     Includes mock‑community validation and per‑hospital comparisons, with all output images saved in `exploratory_pathogen_analysis/`.
 
     ![ggg2](pathogen_abundance/exploratory_pathogen_analysis/method_comparison_mock_community.png)
 
-    ![ggg4](pathogen_abundance/exploratory_pathogen_analysis/method_comparison_mock_community.png)
+    ![ggg4](pathogen_abundance/exploratory_pathogen_analysis/percentage_klebsiella_reads.png)
 
-- **pathogen_abundance/pathogen_timeseries_multi.md**  
+- ### **pathogen_abundance/pathogen_timeseries_multi.md**  
     Harmonizes metadata and Sylph outputs from multiple sequencing runs (`MW`, `temporal`, `17_set`, `seq2111`, `seq1212`).  
     Computes species‑level relative abundance, draws temporal facets with median ± IQR, evaluates library size, adds clinical‑event markers, and produces correlation plots between abundance or assigned reads versus total reads.
 
     ![g5](pathogen_abundance/pathogen_timeseries_multi/temporal_variation_pathogen.png)
 
-    ![g5](pathogen_abundance/pathogen_timeseries_multi/correlation_abundancevstotalreads.png)    
+    ![g6](pathogen_abundance/pathogen_timeseries_multi/correlation_abundancevstotalreads.png)    
 
-- **resistance_analysis/pathogen_resistance.md**  
+- ### **resistance_analysis/pathogen_resistance.md**  
     Builds a resistome ordination for a chosen pathogen (default *Acinetobacter baumannii*, but also performed on *Escherichia coli* and *Klebsiella pneumoniae*).  
-    Merges per‑run resistance counts, normalizes to CPM, performs Bray–Curtis PCoA, colors samples by site/batch/date, and lists top genes correlated with the primary axis.
+    Merges per‑run resistance counts, normalizes to CPM, performs Bray–Curtis PCoA, colors samples by site/batch/date, and lists [`top genes correlated`](resistance_analysis/pathogen_resistance/top_genes_Acinetobacter_baumanniipcoa.html) with the primary axis.
+
+    ![g7](resistance_analysis/pathogen_resistance/pcoa_resistance_profile_baumannii.png)
 
 - **resistance_analysis/resistance_abundance.md**  
     Joins resistance‑gene counts with total read counts and metadata.  
